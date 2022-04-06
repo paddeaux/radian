@@ -33,3 +33,11 @@ This repo holds everything for my MSc in Data Science project. The project invol
   * Analyse the distribution of the geographic locations of particular types of points (e.g. restaurants, shops, bus stops etc. etc.) in order to obtain a distribution with which to generate corresponding realistic random points which are located in a realistic manner
 * Allow exporting of data points to a GeoJSON format
 * Allow exporting of data for use in PostgreSQL
+
+## Section 1: Restaurant Name Distribution
+
+Restaurants of all shapes, types, and sizes appear all over the world. Cities will have collections of one-off, "Mom & Pop" spots, smaller chains of 2 or more restaurants as well as the franchises like McDonald's or Subway. In generating realistic random data, it will be helpful to observe the distribution of restaurants in order to mirror the distribution in the generated data.
+
+The `franchises.py` file does exactly this. It has functionality to query the OSM API (though this is a WIP) as well as .csv files containing data exported from OSM (using Overpass Turbo). The file has functions to analyze the names of restaurants and output the proportions of locations that are one off, chains (2 or more), and franchises (5 or more). 
+* Interestingly, checking across 5 sepearate cities, Dublin, LA, Chicago, London, and New York, the proportion of once-off restaraunts and chains is about 9:1. More cities will be tested to further validate this proportion, it could be useful to also perform this analysis on smaller types of city, allowing perhaps for different "archetypes" of location to be generated.
+* This file will include a function that will generate a words dictionary with which to generate fake location names, and provide weights to these names later so that they appear on a correct proportion of locations, eg. 10% result in chains/franchises of fake restaurant names.
