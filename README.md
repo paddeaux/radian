@@ -34,7 +34,19 @@ This repo holds everything for my MSc in Data Science project. The project invol
 * Allow exporting of data points to a GeoJSON format
 * Allow exporting of data for use in PostgreSQL
 
-## Section 1: Restaurant Name Distribution
+## Section 1: Point Generation
+
+The core problem relating to this project is how to actually generate the points in a random, but realistic manner. The previous final year project which preceded my project used a simple random generator from a uniform distribution, meaning points are uniformly distributed throughout the given polygon. In the real world however points are seldom distributed this way, they cluster around certain areas be that as a result of admiistrative borders, roads, proximity to urban areas or proximity to other locations of the same type.
+
+The following are methods or considerations that can be made for this generation:
+* Using a Voronoi to split the polygon up into smaller polygons:
+  * This could be used to generate points procedurally district by district
+  * Or could also be used to develop a fake road network that could help with the weighting of points
+  * Points could be generated at a full polygon level, then between Voronoi polygons where n = 2, then where n =4 and so on....
+* The centroid of the polygon could be used to influence the distribution of points being generated, i.e. more points located towards the centroid than towards the outter limits of the polygon
+* 
+
+## Section 2: Restaurant Name Distribution
 
 Restaurants of all shapes, types, and sizes appear all over the world. Cities will have collections of one-off, "Mom & Pop" spots, smaller chains of 2 or more restaurants as well as the franchises like McDonald's or Subway. In generating realistic random data, it will be helpful to observe the distribution of restaurants in order to mirror the distribution in the generated data.
 
