@@ -46,6 +46,22 @@ The following are methods or considerations that can be made for this generation
 * The centroid of the polygon could be used to influence the distribution of points being generated, i.e. more points located towards the centroid than towards the outter limits of the polygon
 * 
 
+### Thus Far the Following Progress has been made on points generation:
+
+#### Generating points around the polygon centroid
+A Python function, `points_from_centroid` takes in a given polygon along with the number of points to be generated. The function then creates circular districts around the centroid of the polygon, with each being larger than the previous. Each circle is assigned the same proportion of points to be generated, resulting in the larger circles having lower density compared to the smaller inner circles. The net effect of this generation is that points appear to concentrate towards the centre of the polygon, with the density reducing the further from the polygon centroid.
+   * This is good progress - however tests with large values of *N*, where *N* is the number of points to be generated, reveals the circular boundaries of the buffers created to generate points.
+   * Additional steps need to be taken to remove this uniformity from the generation - perhaps adding in an extra variable at generation that would randomly assign an additional value to the generated x or y coordinates would serve to lessen the forming of this pattern.
+
+#### Using Kmeans Clustering to generate
+A function which uses uniform points generation to then implement Kmeans clustering to produce clusters and cluster centroids. This is made with the purposes of creating centroids for use in Voronoi generation. Using this method to generate these Voronoi centroids results in Voronoi polygons that are roughly equal in area.
+
+#### Voronoi Generation
+As stated above, the voronoi package allows for the generation/plotting of voronoi regions in a polygon. The method uses the Kmeans generated centroids as the basis for the generation of corresponding Voronoi polygons.
+
+#### All of the above
+Currently the program is able to take in a set number of points, *N*, and split that into *x* and *y*, where *x* is the number of points generated around the centroid of the full polygon itself as outlined above. *y* is the number of points that will then be distributed amongst the Voronoi regions generated above, with each Voronoi having $y/i$ points generated around their centroids, where *i* is the number of Voronoi regions to be generated
+
 ## Section 2: Restaurant Name Distribution
 
 Restaurants of all shapes, types, and sizes appear all over the world. Cities will have collections of one-off, "Mom & Pop" spots, smaller chains of 2 or more restaurants as well as the franchises like McDonald's or Subway. In generating realistic random data, it will be helpful to observe the distribution of restaurants in order to mirror the distribution in the generated data.
