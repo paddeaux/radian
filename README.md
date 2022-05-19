@@ -1,4 +1,4 @@
-# rand-geo-data
+# MSc Data Science & Analytics Project - Random Spatial Data Generation with Python
 This repo holds everything for my MSc in Data Science project. The project involves the creation of a Python tool to generate realistic random spatial data for use in assessment
 
 ## Planned Functionality:
