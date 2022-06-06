@@ -11,6 +11,11 @@ This repo holds everything for my MSc in Data Science project. The project invol
 
 ## Current Goals & Progress
 
+* Use circular buffering to allow generation of points centred around the centroid of a polygon
+* Allow exporting of data points to a GeoJSON format
+* Allow exporting of data for use in PostgreSQL
+
+### Optional Goals
 * Analyze Open Street Map attribute/location data
   * Using word frequency analysis in order to determine the most commonly used terms/words that appear in metadata
     * Bars/Restuarants:
@@ -31,36 +36,25 @@ This repo holds everything for my MSc in Data Science project. The project invol
   * Use these frequencies to produce dictionaries that will allow for generation of random realistic attribute data
   * Use distributions in order to allow metadata to be distributed inside the polygon in a realistic manner (e.g. restaurants having popular chain restaurants with multiple locations along with many one-off spots.
   * Analyse the distribution of the geographic locations of particular types of points (e.g. restaurants, shops, bus stops etc. etc.) in order to obtain a distribution with which to generate corresponding realistic random points which are located in a realistic manner
-* Allow exporting of data points to a GeoJSON format
-* Allow exporting of data for use in PostgreSQL
+
 
 ## Section 1: Point Generation
 
-The core problem relating to this project is how to actually generate the points in a random, but realistic manner. The previous final year project which preceded my project used a simple random generator from a uniform distribution, meaning points are uniformly distributed throughout the given polygon. In the real world however points are seldom distributed this way, they cluster around certain areas be that as a result of admiistrative borders, roads, proximity to urban areas or proximity to other locations of the same type.
+### Macro Generation: Moving and True Centroid
+A Python function has been created to produce randomly generated spatial data points, located inside a given Polygon in GeoJSON format. The function is able to produce multiple forms of random generationg using a mix of local and source-level generation.
 
-The following are methods or considerations that can be made for this generation:
-* Using a Voronoi to split the polygon up into smaller polygons:
-  * This could be used to generate points procedurally district by district
-  * Or could also be used to develop a fake road network that could help with the weighting of points
-  * Points could be generated at a full polygon level, then between Voronoi polygons where n = 2, then where n =4 and so on....
-* The centroid of the polygon could be used to influence the distribution of points being generated, i.e. more points located towards the centroid than towards the outter limits of the polygon
-* 
+The primary method of generation utilizes Voronoi-based buffers to produce 5 concentric regions centred around the polygon centroid, with each of these regions being assigned an equal number of points to be generated. The result of this is points generationg which is concentrated towards the given centroid, with the density of points decreasing the furhter away from the centroid, **producing an effect similar to that of a real life set of points in a metropolitan area**.
 
-### Thus Far the Following Progress has been made on points generation:
+The above generation can be performed using the original true polygon centroid, or through the generation of a "moving centroid" which is a randomly generated centroid in an eliptical area around the true centroid. This will in turn cause the resulting Voronoi-buffer regions to be shifted in the x/y axis according to the position of the generated moving centroid in relation to the original centroid. **This reflects the real world fact of the administrative or metropolitan centre of a an area not necessarily being located at the exact geographic centre of the region.**
 
-#### Generating points around the polygon centroid
-A Python function, `points_from_centroid` takes in a given polygon along with the number of points to be generated. The function then creates circular districts around the centroid of the polygon, with each being larger than the previous. Each circle is assigned the same proportion of points to be generated, resulting in the larger circles having lower density compared to the smaller inner circles. The net effect of this generation is that points appear to concentrate towards the centre of the polygon, with the density reducing the further from the polygon centroid.
-   * This is good progress - however tests with large values of *N*, where *N* is the number of points to be generated, reveals the circular boundaries of the buffers created to generate points.
-   * Additional steps need to be taken to remove this uniformity from the generation - perhaps adding in an extra variable at generation that would randomly assign an additional value to the generated x or y coordinates would serve to lessen the forming of this pattern.
+### Micro Generation:
+The function allows for more granular points generation through the addition of local-level generation in multiple ways.
 
-#### Using Kmeans Clustering to generate
-A function which uses uniform points generation to then implement Kmeans clustering to produce clusters and cluster centroids. This is made with the purposes of creating centroids for use in Voronoi generation. Using this method to generate these Voronoi centroids results in Voronoi polygons that are roughly equal in area.
+#### Equal Area Local Generation:
+The equal area local generation generates approximately equal-area Voronoi regions inside the source Polygon and then generates an equal proportion of points in each of these local polygons.
 
-#### Voronoi Generation
-As stated above, the voronoi package allows for the generation/plotting of voronoi regions in a polygon. The method uses the Kmeans generated centroids as the basis for the generation of corresponding Voronoi polygons.
+#### Variable Area Local Generation
 
-#### All of the above
-Currently the program is able to take in a set number of points, *N*, and split that into *x* and *y*, where *x* is the number of points generated around the centroid of the full polygon itself as outlined above. *y* is the number of points that will then be distributed amongst the Voronoi regions generated above, with each Voronoi having $y/i$ points generated around their centroids, where *i* is the number of Voronoi regions to be generated
 
 ## Section 2: Restaurant Name Distribution
 
