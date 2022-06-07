@@ -59,7 +59,7 @@ def voronoi_gen(poly, vor_num, gen_type):
 
         vor_centroids = kmeans_centroids(poly, 500, vor_num, 0)
     # Setting crs to meter based projection
-    gdf_proj = vor_centroids.to_crs(poly.crs)
+    gdf_proj = vor_centroids.set_crs(poly.crs)
 
     # Convert the boundary geometry into a union of the polygon
     boundary_shape = cascaded_union(poly.geometry)
@@ -69,7 +69,13 @@ def voronoi_gen(poly, vor_num, gen_type):
     region_polys, region_pts = voronoi_regions_from_coords(coords, boundary_shape)
 
     # Create GeoDataFrame of the Voronoi Polygons
-    df = pd.DataFrame.from_dict(region_polys, orient='index', columns=['geometry'])
+
+    ####### This is the 'Polygon' object is not iterable error source ##########################
+    #df = pd.DataFrame.from_dict(region_polys, orient='index', columns=['geometry'])
+
+    print("region_polys:\n" + str(region_polys))
+
+    df = pd.DataFrame(list(region_polys.items()), columns=['index','geometry'])
     gdf_poly = gpd.GeoDataFrame(df, geometry='geometry')
     gdf_poly.crs = poly.crs
 
@@ -287,7 +293,7 @@ def random_point_gen(poly, num_points, gen_type):
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
         return gdf
 
-def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, rand_centroid, to_sql, to_geojson, to_png, plot, animate):
+def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, rand_centroid, to_sql, to_geojson, to_png, png_filename, plot, breakdown, animate):
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
@@ -419,54 +425,78 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
     # Plotting of generated points and Voronoi regions
     if(plot or to_png):
         # create fig and axes to plot and compare points and Voronoi buffer regions
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 6))
 
-        source.plot(ax=ax1, color='gray')
-        source.plot(ax=ax2, color='gray')
-        source.plot(ax=ax3, color='gray')
-        source.plot(ax=ax4, color='gray')
-
-        vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.8)
-        if local_gen_type != 0:
-            local_vor_polygons.plot(ax=ax3, cmap='Blues', edgecolor='white', alpha=0.4)
-
-        # vor_polygons.plot(ax=ax1, column='class', cmap='Blues', edgecolor='white', alpha=0.8)
-        # centroid_point.plot(ax=ax1, color='Red')
-
-        # plot the Bulk points
-        if(bulk_points > 0):
-            #vor_pts.plot(ax=ax1, markersize=.5, color='black')
-            vor_pts.plot(ax=ax2, markersize=.5, color='black')
-
-        if local_gen_type != 0:
-            local_gdf.plot(ax=ax3, markersize=0.5, color='white')
-            local_gdf.plot(ax=ax2, markersize=0.5, color='black')
-
-        # set figure title
-        fig_title = "Points Generation: " + str(total_pts) + " total points, Local Ratio of " + str(local_ratio) + "\n"
-        if(rand_centroid):
-            fig_title += "Moving Centroid "
+        # Setting plot title
+        title = "Random Spatial Data - Radial Voronoi Generation\n" \
+                "{} total points at ratio {} : Macro Points = {}, Micro Points = {}\n".format(total_pts, local_ratio, bulk_points, total_pts - bulk_points)
+        if (rand_centroid):
+            title += "Using moving centroid\n"
         else:
-            fig_title += "Fixed Centroid "
+            title += "Using original centroid\n"
 
+        # Local Generation type
+        if (local_gen_type == 0):
+            title += "Local Generation: None\n"
+        elif (local_gen_type == 1):
+            title += "Local Generation: Equal-area Voronoi, {} local regions\n".format(local_vor_num)
+        elif (local_gen_type == 2):
+            title += "Local Generation: Variable-area Voronoi - Points by Area, {} local regions\n".format(
+                local_vor_num)
+        elif (local_gen_type == 3):
+            title += "Local Generation: Variable-area Voronoi - Equal Points, {} local regions\n".format(local_vor_num)
+        else:
+            title += "Local Generation: Error"
+        if(breakdown):
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 6))
 
-        fig.suptitle(fig_title)  # Plot title text
-        ax1.set_title("Bulk points generation with Voronoi-based buffers")
-        ax1.axis("off")
-        ax2.set_title("Final Points generation")
-        ax2.axis("off")
-        ax3.set_title("Local Generation")
-        ax3.axis("off")
-        ax4.axis("off")
+            source.plot(ax=ax1, color='gray')
+            source.plot(ax=ax2, color='gray')
+            source.plot(ax=ax3, color='gray')
+            source.plot(ax=ax4, color='gray')
 
-        plt.axis('equal')
+            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.8)
+            if local_gen_type != 0:
+                local_vor_polygons.plot(ax=ax3, cmap='Blues', edgecolor='white', alpha=0.4)
+
+            # vor_polygons.plot(ax=ax1, column='class', cmap='Blues', edgecolor='white', alpha=0.8)
+            # centroid_point.plot(ax=ax1, color='Red')
+
+            # plot the Bulk points
+            if(bulk_points > 0):
+                #vor_pts.plot(ax=ax1, markersize=.5, color='black')
+                vor_pts.plot(ax=ax2, markersize=.5, color='black')
+
+            if local_gen_type != 0:
+                local_gdf.plot(ax=ax3, markersize=0.5, color='white')
+                local_gdf.plot(ax=ax2, markersize=0.5, color='black')
+
+            fig.suptitle(title)  # Plot title text
+            ax1.set_title("Bulk points generation with Voronoi-based buffers")
+            ax1.axis("off")
+            ax2.set_title("Final Points generation")
+            ax2.axis("off")
+            ax3.set_title("Local Generation")
+            ax3.axis("off")
+            ax4.axis("off")
+            plt.axis('equal')
+
+        else:
+            fig, ax = plt.subplots(figsize=(8, 8))
+
+            source.plot(ax=ax, color='gray')
+            if (bulk_points > 0):
+                vor_pts.plot(ax=ax, markersize=.5, color='black')
+
+            if local_gen_type != 0:
+                local_gdf.plot(ax=ax, markersize=0.5, color='black')
+            fig.suptitle(title)  # Plot title text
+            ax.axis("off")
+            plt.axis('equal')
 
         if(to_png):
-            plt.savefig(f"{filename.split('.')[0]}_points.png")
+            plt.savefig(f"{filename.split('.')[0]}_points{png_filename}.png")
         if(plot):
             plt.show()
-
-    print(vor_pts['geometry'][0])
 
     if(animate):
         ani_points = vor_pts['geometry']
@@ -490,9 +520,7 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
         gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
-        print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0],total_pts))
-
-    print(vor_all)
+        print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
 def geometry_testing_plot(vor_num, total_pts):
     file_dirs = ['square.geojson', 'triangle.geojson', 'star.geojson', 's.geojson']
@@ -506,25 +534,33 @@ def geometry_testing_plot(vor_num, total_pts):
             rand_centroid=True,
             to_sql=False,
             to_geojson=False,
-            to_png=False,
-            plot=True,
+            to_png=True,
+            plot=False,
             animate=False
         )
 
 
 def main():
+    # No local generation, using true centroid
     radial_rpg(
-        filename='london.geojson',
-        total_pts=3000,
-        local_gen_type=2,
-        local_ratio=0.7,
-        local_vor_num=16,
-        rand_centroid=True,
-        to_sql=False,
-        to_geojson=False,
-        to_png=False,
-        plot=True,
-        animate=False
+        filename='london.geojson',total_pts=3000,local_gen_type=0,local_ratio=1,local_vor_num=16,
+        rand_centroid=False,to_sql=False,to_geojson=False,to_png=True, png_filename="no_local",plot=False,breakdown=False, animate=False
+    )
+    # Equal area, equal point local voronoi generation, using moving centroid
+    radial_rpg(
+        filename='london.geojson', total_pts=1500, local_gen_type=1, local_ratio=0, local_vor_num=16,
+        rand_centroid=True, to_sql=False, to_geojson=False, to_png=True, png_filename="eq_local", plot=False, breakdown=False, animate=False
+    )
+    # Variable area local generation, with points determined by region area, using true centroid
+    radial_rpg(
+        filename='london.geojson', total_pts=1500, local_gen_type=2, local_ratio=0, local_vor_num=16,
+        rand_centroid=False, to_sql=False, to_geojson=False, to_png=True, png_filename="var_local_area", plot=False, breakdown=False, animate=False
+    )
+
+    # Variable area local generation, with equal points in each region, using moving centroid
+    radial_rpg(
+        filename='london.geojson', total_pts=1500, local_gen_type=3, local_ratio=0, local_vor_num=16,
+        rand_centroid=False, to_sql=False, to_geojson=False, to_png=True, png_filename="var_local_eq", plot=False, breakdown=False, animate=False
     )
 
 main()
@@ -532,4 +568,3 @@ main()
 
 # To do:
 # Polygon is not iterable error (works after re-running)
-
