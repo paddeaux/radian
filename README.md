@@ -32,11 +32,13 @@ This generation produces Voronoi regions of varying size, with smaller regions c
 
 ## Section 2: Output
 
-### 1) SQL
-The radial generation function has functionality for SQL exporting. An SQL file can be outputted which allows for replication of the data in a PostgreSQL database, through appropriate table creation and insertion statements.
+The output feature of the tool is incredibly important as it allows students to be able to freely make use of the generated dataset. As a pre-processing step before any file export, the final points dataset is stored as a GeoPandas GeoDataframe.
 
-### 2) GeoJSON
+### 1) GeoJSON
 Exporting of the data to GeoJSON format is very simple thanks to the extensive use of the GeoPandas package, which includes simplified exporting of GeoDataFrames to GeoJSON with a built in function.
+
+### 2) SQL
+The exporting to SQL requires a great deal more thought than the exporting to geojson. GeoPandas has native compatibility for GeoJSON, allowing data to be exported in this way at the call of a function. The same can not be said for SQL. Through some simple manipulation of the columns and some checks for the data types, an SQL file can be written which will contain the table creation and insert statements for a PostgreSQL database of the generated spatial points.
 
 ### 3) Plotting
 The tool offers the ability to display the outputted points on a Matplotlib map to demonstrate both the final set of points as well as the intermediate steps and buffers/polygons generated to reach that last dataframe.
@@ -44,13 +46,6 @@ The tool offers the ability to display the outputted points on a Matplotlib map 
 ### 4) Animation
 The tool has limited animation functionality. Currently the Matplotlib animate features are implemented to allow a Map animation showing each of the final points in the generated data set. The primary issue with this currently is the slow speed at which each frame of animation can be rendered.
 
-## Section X: Restaurant Name Distribution
-
-Restaurants of all shapes, types, and sizes appear all over the world. Cities will have collections of one-off, "Mom & Pop" spots, smaller chains of 2 or more restaurants as well as the franchises like McDonald's or Subway. In generating realistic random data, it will be helpful to observe the distribution of restaurants in order to mirror the distribution in the generated data.
-
-The `franchises.py` file does exactly this. It has functionality to query the OSM API (though this is a WIP) as well as .csv files containing data exported from OSM (using Overpass Turbo). The file has functions to analyze the names of restaurants and output the proportions of locations that are one off, chains (2 or more), and franchises (5 or more). 
-* Interestingly, checking across 5 sepearate cities, Dublin, LA, Chicago, London, and New York, the proportion of once-off restaraunts and chains is about 9:1. More cities will be tested to further validate this proportion, it could be useful to also perform this analysis on smaller types of city, allowing perhaps for different "archetypes" of location to be generated.
-* This file will include a function that will generate a words dictionary with which to generate fake location names, and provide weights to these names later so that they appear on a correct proportion of locations, eg. 10% result in chains/franchises of fake restaurant names.
 
 
 ## Planned Functionality:
@@ -61,30 +56,4 @@ The `franchises.py` file does exactly this. It has functionality to query the OS
 * Exporting of data to a GeoJSON format
 * Exporting of data to a PostgreSQL format
 
-## Current Goals & Progress
 
-* Use circular buffering to allow generation of points centred around the centroid of a polygon
-* Allow exporting of data points to a GeoJSON format
-* Allow exporting of data for use in PostgreSQL
-
-### Optional Goals
-* Analyze Open Street Map attribute/location data
-  * Using word frequency analysis in order to determine the most commonly used terms/words that appear in metadata
-    * Bars/Restuarants:
-      * Names
-      * Types of food
-      * Contact details
-    * Shops:
-      * Names
-      * Types of goods sold
-      * Contact details
-    * Schools:
-      * Names
-      * Level of school (primary/secondary/tertiary)
-      * Mixed or not
-    * Transport Stops (Bus/Train)
-      * Routes served
-      * Stop code
-  * Use these frequencies to produce dictionaries that will allow for generation of random realistic attribute data
-  * Use distributions in order to allow metadata to be distributed inside the polygon in a realistic manner (e.g. restaurants having popular chain restaurants with multiple locations along with many one-off spots.
-  * Analyse the distribution of the geographic locations of particular types of points (e.g. restaurants, shops, bus stops etc. etc.) in order to obtain a distribution with which to generate corresponding realistic random points which are located in a realistic manner
