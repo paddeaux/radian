@@ -24,20 +24,8 @@ Running the tool will require installation of the necessary third-party packages
 * `extra_var_name` : List of strings indicating the variable name(s) for the extra CSV columns to be added.
 * `extra_var_file` : List of strings indicating the file names of the CSVs used for the extra variables.
 
-## Note on the CSV files
+### Note on the CSV files
 The CSV files for adding additional variables to the data should be simply formatted into two columns, one with a list of potential values, and a second column with weights indicating the frequency at which each value should occur in the final dataset.
-
-#### 0) No Local Generation:
-The function allows for just Macro-level generation, by setting the corresponding local parameters to zero, thus removing the local generation entirely
-
-#### 1) Equal Area Local Generation:
-The equal area local generation generates approximately equal-area Voronoi regions inside the source Polygon and then generates an equal proportion of points in each of these local polygons.
-
-#### 2) Variable Area Local Generation: Equal Points
-This generation produces Voronoi regions of varying size, with smaller regions concentrated towards the centroid of the polygon. These regions are assigned an equal number of points in each.
-
-#### 3) Variable Area Local Generation: Points by Area
-This generation produces Voronoi regions of varying size, with smaller regions concentrated towards the centroid of the polygon. These regions are assigned points based on the area of each region, i.e. regions with larger area are allocated more points than smaller regions.
 
 ## Section 1: Point Generation
 
