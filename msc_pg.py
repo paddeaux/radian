@@ -6,8 +6,8 @@ Created on Tue Apr 19 15:54:29 2022
 """
 import random
 from random import randint
-from random import randrange
-import datetime
+
+import json
 import string
 import geopandas as gpd
 import pandas as pd
@@ -130,7 +130,7 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
 # This function takes in a GeoDataFrame of randomly generated points (along with additional random variables)
 # and produces a SQL file that will allow a PostgreSQL table to be created containing the data
 
-def gdf_to_sql(table_name, gdf, num_rows):
+def gdf_to_sql(table_name, gdf, num_rows, extra_var, extra_var_name):
     # Opens up an SQL file based on the table name, writes to the file and closes it
     sqlFile = open(f'{table_name}_SQL.sql', "w")
     sqlFile.write("")
@@ -140,16 +140,26 @@ def gdf_to_sql(table_name, gdf, num_rows):
     sqlFile = open(f'{table_name}_SQL.sql', "a")
 
     # SQL statments to create the table as well as drop if exists the table are appended
-    sqlFile.write("DROP TABLE IF EXISTS {}; \n".format(table_name))
-    sqlFile.write("CREATE TABLE {} ( \n".format(table_name))
-    sqlFile.write("pkid SERIAL PRIMARY KEY NOT NULL, \n")
+    sqlFile.write('DROP TABLE IF EXISTS {}; \n'.format(table_name))
+    sqlFile.write('CREATE TABLE {} ( \n'.format(table_name))
+    sqlFile.write('pkid SERIAL PRIMARY KEY NOT NULL, \n')
     sqlFile.write("thegeom GEOMETRY DEFAULT ST_GeomFromText('POINT(0,51)', 4326), \n")
-    sqlFile.write("rand_int INTEGER, \n")
-    sqlFile.write("rand_string VARCHAR\n")
-    sqlFile.write("); \n")
+    sqlFile.write('rand_int INTEGER, \n')
+    sqlFile.write('rand_string VARCHAR, \n')
+    sqlFile.write('rand_ts TIMESTAMP')
+    if extra_var:
+        for var_name in extra_var_name:
+            create_query = ',\n{} '.format(var_name)
+            if isinstance(gdf[f'{var_name}'][0], np.int64):
+                create_query += 'INTEGER'
+            else:
+                create_query += 'VARCHAR'
+            sqlFile.write(create_query)
+
+    sqlFile.write('\n); \n')
 
     # Creation of Spatial Index for the SQL file
-    sqlFile.write("CREATE INDEX {}_spatial_index ON {} USING gist (thegeom); \n".format(table_name, table_name))
+    sqlFile.write('CREATE INDEX {}_spatial_index ON {} USING gist (thegeom); \n'.format(table_name, table_name))
 
     # Loop through every point in the GeoDataFrame to write an instert statement to append to the SQL file
     for row in gdf.iterrows():
@@ -159,10 +169,32 @@ def gdf_to_sql(table_name, gdf, num_rows):
         # Pull the randomly generated strings and ints from the dataframe
         rand_str = row[1][1]
         rand_int = row[1][2]
+        rand_ts = row[1][3]
+        if(not extra_var):
+            # Insert statement for each point along with the included variables
+            query = "INSERT into {} (thegeom, rand_int, rand_string, rand_ts) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326), {}, '{}', '{}'); \r".format(
+                table_name, lon, lat, rand_int, rand_str, rand_ts)
+        else:
+            extra_values = []
+            for i in range(len(extra_var_name)):
+                extra_values.append(row[1][4+i])
 
-        # Insert statement for each point along with the included variables
-        query = "INSERT into {} (thegeom, rand_int, rand_string) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326), {}, '{}'); \r".format(
-            table_name, lon, lat, rand_int, rand_str)
+            query = 'INSERT into {} (thegeom, rand_int, rand_string, rand_ts'.format(table_name)
+            for var_name in extra_var_name:
+                query += ', {}'.format(var_name)
+
+            query += " ) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326), {}, '{}', '{}'".format(
+                lon, lat, rand_int, rand_str, rand_ts)
+
+            for value in extra_values:
+                if isinstance(value, str):
+                    temp = value.replace("'", "''")
+                    query += ", '{}'".format(temp)
+                elif isinstance(value, int):
+                    query += ', {}'.format(value)
+
+            query += '); \r'
+
         # Write query string to SQL file
         sqlFile.write(query)
 
@@ -236,16 +268,7 @@ def random_point_gen(poly, num_points, gen_type):
                 # as well as within the current section
                 if (random_point.within(poly)):
                     if (random_point.within(c_current)):
-                        random_string = ''.join(
-                            random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10))
-                        # Create random int with bounds inputted from .ini file.
-                        random_int = randint(0, 1000)
-                        # Take a random number, translate that to seconds and develops that into HH:MM:SS format.
-                        random_timestamp = datetime.timedelta(seconds=randrange(86400))
                         points.append(random_point)
-                        rand_strings.append(random_string)
-                        rand_ints.append(random_int)
-                        # rand_ts.append(random_timestamp)
                         current_pts += 1
                 if (current_pts >= section_pts):
                     section_num += 1
@@ -257,8 +280,7 @@ def random_point_gen(poly, num_points, gen_type):
         gdf_buff = gpd.GeoDataFrame(df_buff, geometry='geometry')
 
         # Points list is converted to a GeoDataFrame and outputted
-        df = pd.DataFrame(list(zip(points, rand_strings, rand_ints)),
-                          columns=['geometry', 'random_string', 'random_int'])
+        df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
         gdf.crs = poly._crs
         return gdf
@@ -276,24 +298,29 @@ def random_point_gen(poly, num_points, gen_type):
                 random_point = Point([random.uniform(min_x + random.uniform(0,100), max_x - random.uniform(0,100)), random.uniform(min_y + random.uniform(0,100), max_y - random.uniform(0,100))])
                 if (random_point.within(poly)):
                     if (random_point.within(c_current)):
-                        random_string = ''.join(
-                            random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10))
-                        random_int = randint(0, 1000)
-                        random_timestamp = datetime.timedelta(seconds=randrange(86400))
                         points.append(random_point)
-                        rand_strings.append(random_string)
-                        rand_ints.append(random_int)
                         current_pts += 1
                 if (current_pts >= section_pts):
                     section_num += 1
             buffers.append(c_current)
         df_buff = pd.DataFrame(buffers, columns=['geometry'])
         gdf_buff = gpd.GeoDataFrame(df_buff, geometry='geometry')
-        df = pd.DataFrame(list(zip(points, rand_strings, rand_ints)), columns=['geometry', 'random_string', 'random_int'])
+        df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
         return gdf
 
-def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, rand_centroid, to_sql, to_geojson, to_png, png_filename, plot, breakdown, animate):
+def csv_att(filename, num_values):
+    source = pd.read_csv(filename)
+    name_dist = list(random.choices(source['string'], weights = source['weight'], k = num_values))
+    return name_dist
+
+
+# Radial points generation using function parameters
+def radial_points_gen(
+        filename, total_pts=1000, local_gen_type=0, local_ratio=1, local_vor_num=0, rand_centroid=True,
+        to_sql=False, to_geojson=False, to_png=False, png_filename='default', plot=True, breakdown=True,
+        animate=False, extra_var=False, extra_var_name='default_var', extra_var_file='default.csv'
+):
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
@@ -389,9 +416,9 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
     # Bulk generation in the source polygon
+    vor_union = vor_polygons.dissolve(by='class', as_index=False)
     if(bulk_points > 0):
         # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
-        vor_union = vor_polygons.dissolve(by='class', as_index=False)
         # combining successive Voronoi regions to allow points generating inside them
         vor_all = gpd.GeoDataFrame()
         for i in range(len(vor_union['geometry'])):
@@ -411,7 +438,7 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
-    if(to_sql or to_geojson):
+    if(to_sql or to_geojson or extra_var):
         if(local_gen_type != 0 and bulk_points > 0):
             gdf_out = gpd.GeoDataFrame(vor_pts.append(local_gdf, ignore_index=True))
         elif(local_gen_type == 0):
@@ -447,7 +474,7 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
         else:
             title += "Local Generation: Error"
         if(breakdown):
-            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 6))
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 8))
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
@@ -513,9 +540,291 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
         ani = FuncAnimation(fig, animate, total_pts, interval=5, repeat=False)
         plt.show()
 
+    if(extra_var):
+        if(isinstance(extra_var_file, str)):
+            gdf_out[f'{extra_var_name}'] = csv_att(extra_var_file, total_pts)
+        elif(isinstance(extra_var_file, list)):
+            for i in range(len(extra_var_name)):
+                gdf_out[f'{extra_var_name[i]}'] = csv_att(extra_var_file[i], total_pts)
+        else:
+            print("Extra var input invalid")
+
+
     # Exporting the generated points to an SQL file
     if(to_sql):
-        gdf_to_sql(f"{filename.split('.')[0]}", gdf_out, total_pts)
+        gdf_to_sql(f"{filename.split('.')[0]}", gdf_out, total_pts, extra_var)
+
+    # Exporting the generated points to a GeoJSON file
+    if(to_geojson):
+        gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
+        print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
+
+# Radial points generation using JSON file for parameters
+def radial_spatial_points():
+
+    params = json.load(open('parameters.json'))
+    filename = params["filename"]
+    total_pts = params["total_pts"]
+    local_gen_type = params["local_gen_type"]
+    local_ratio = params["local_ratio"]
+    local_vor_num = params["local_vor_num"]
+    rand_centroid = params["rand_centroid"]
+    to_sql = params["to_sql"]
+    to_geojson = params["to_geojson"]
+    to_png = params["to_png"]
+    png_filename = params["png_filename"]
+    plot = params["plot"]
+    breakdown = params["breakdown"]
+    animate = params["animate"]
+    extra_var = params["extra_var"]
+    extra_var_name = params["extra_var_name"]
+    extra_var_file = params["extra_var_file"]
+
+# Reading in the GeoJSON file and setting the CRS to a meter-based projection
+    source = gpd.read_file(params['filename'])
+    source = source.to_crs(epsg=3857)
+    min_x, min_y, max_x, max_y = source.total_bounds
+
+    # Set the number used for Voronoi-based buffer generation to 256
+    vor_num = 256
+
+    # This set of if-else statements determines how the Voronoi polygons are generated
+    if(params['rand_centroid']):
+        print("Generating Voronoi with Moving Centroid...")
+        vor_polygons = voronoi_gen(source, vor_num, 'rand')
+    else:
+        print("Generating Voronoi with Original...")
+        vor_polygons = voronoi_gen(source, vor_num, 'eq')
+
+    vor_polygons.crs = source.crs
+
+    # Source-boundary Generation
+    bulk_points = total_pts * local_ratio
+
+    #### Local level generation ###
+
+    # local_gen_type:
+        # 0 for no local-level generation
+        # 1 for Equal-area Voronoi local generation
+        # 2 for Variable-area Voronoi local generation with points determined by area
+        # 3 for Variable-area Voronoi local generation with equal points in each Voronoi
+
+    # Set no local generation as the default
+    if local_gen_type > 3:
+        local_gen_type = 0
+
+    # Local generation with approximately equal-area Voronoi polygons
+    if local_gen_type == 1:
+        if local_vor_num > 256:
+            local_vor_num = 256
+            print("Max local_vor_num is 256!")
+        #bulk_points = total_pts * local_ratio
+        local_points = total_pts * (1 - local_ratio)
+        local_vor_points = local_points / local_vor_num
+
+        local_vor_polygons = voronoi_gen(source, local_vor_num, 'eq')
+        print("Voronoi complete.")
+        # the polyogn crs is set as the main polygon crs
+        local_vor_polygons.crs = source.crs
+
+        local_gdf = gpd.GeoDataFrame()
+        for i in range(0, local_vor_num):
+            current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
+            local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True ))
+
+    # Local generation with variable area Voronoi polygons with number of points based on area
+    elif local_gen_type == 2:
+        if local_vor_num > 32:
+            local_vor_num = 32
+            print("Max poly_area value is 32!")
+        #bulk_points = total_pts * local_ratio
+        local_points = total_pts * (1-local_ratio)
+
+        print("Generating Voronoi with Variable Area...")
+        local_vor_polygons = voronoi_gen(source, local_vor_num, 'area')
+
+        # calculating the area of each polygon to determine the proportion of points in each
+        local_area_union = local_vor_polygons.dissolve()
+        local_area = local_area_union.area
+
+        local_gdf = gpd.GeoDataFrame()
+        for i in range(0, local_vor_num):
+            area_prop = local_vor_polygons['geometry'][i].area / local_area
+            current_local_points = int(round(local_points * area_prop))
+            current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
+            local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
+
+    # Local generation with variable area Voronoi polygons with equal number of points in each
+    elif local_gen_type == 3:
+        if local_vor_num > 32:
+            local_vor_num = 32
+            print("Max poly_area value is 32!")
+        local_points = total_pts * (1 - local_ratio)
+        local_vor_points = local_points / local_vor_num
+
+        print("Generating Voronoi with Variable Area...")
+        local_vor_polygons = voronoi_gen(source, local_vor_num, 'area')
+
+        print("Voronoi complete.")
+        # the polyogn crs is set as the main polygon crs
+        local_vor_polygons.crs = source.crs
+
+        local_gdf = gpd.GeoDataFrame()
+        for i in range(0, local_vor_num):
+            current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
+            local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
+
+    # Bulk generation in the source polygon
+    vor_union = vor_polygons.dissolve(by='class', as_index=False)
+    if(bulk_points > 0):
+        # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
+        # combining successive Voronoi regions to allow points generating inside them
+        vor_all = gpd.GeoDataFrame()
+        for i in range(len(vor_union['geometry'])):
+            current = gpd.GeoSeries(cascaded_union(list(vor_union['geometry'][0:i + 1])))
+            vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
+
+        # Generating points inside the merged Voronoi regions
+        vor_points = total_pts / 5
+        vor_pts = gpd.GeoDataFrame()
+        for i in range(len(vor_all[0])):
+            ### should this be the rand???
+            if(rand_centroid):
+                gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
+            else:
+                gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
+
+            vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
+
+    # Merging the bulk and local point dataframes for output to SQL or GeoJSON
+    if(to_sql or to_geojson or extra_var):
+        if(local_gen_type != 0 and bulk_points > 0):
+            gdf_out = gpd.GeoDataFrame(vor_pts.append(local_gdf, ignore_index=True))
+        elif(local_gen_type == 0):
+            gdf_out = vor_pts
+        else:
+            gdf_out = local_gdf
+
+        gdf_out = gdf_out.set_crs(epsg=3857)
+        gdf_out = gdf_out.to_crs(epsg=4326)
+
+        # Here we can set the extra random attribute variables
+        gdf_out['rand_str'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)) for i in range(total_pts)]
+        gdf_out['rand_int'] = [randint(0, 1000) for i in range(total_pts)]
+
+        def random_dates(start, end, n):
+            ts_start = start.value//10**9
+            ts_end = end.value//10**9
+            return list(pd.to_datetime(np.random.randint(ts_start, ts_end, n), unit='s'))
+
+        start = pd.to_datetime('2015-01-01')
+        end = pd.to_datetime('2022-06-09')
+        gdf_out['rand_ts'] = random_dates(start, end, total_pts)
+
+
+    # Plotting of generated points and Voronoi regions
+    if(plot or to_png):
+        # create fig and axes to plot and compare points and Voronoi buffer regions
+
+        # Setting plot title
+        title = "Random Spatial Data - Radial Voronoi Generation\n" \
+                "{} total points at ratio {} : Macro Points = {}, Micro Points = {}\n".format(total_pts, local_ratio, bulk_points, total_pts - bulk_points)
+        if (rand_centroid):
+            title += "Using moving centroid\n"
+        else:
+            title += "Using original centroid\n"
+
+        # Local Generation type
+        if (local_gen_type == 0):
+            title += "Local Generation: None\n"
+        elif (local_gen_type == 1):
+            title += "Local Generation: Equal-area Voronoi, {} local regions\n".format(local_vor_num)
+        elif (local_gen_type == 2):
+            title += "Local Generation: Variable-area Voronoi - Points by Area, {} local regions\n".format(
+                local_vor_num)
+        elif (local_gen_type == 3):
+            title += "Local Generation: Variable-area Voronoi - Equal Points, {} local regions\n".format(local_vor_num)
+        else:
+            title += "Local Generation: Error"
+        if(breakdown):
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 8))
+
+            source.plot(ax=ax1, color='gray')
+            source.plot(ax=ax2, color='gray')
+            source.plot(ax=ax3, color='gray')
+            source.plot(ax=ax4, color='gray')
+
+            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.8)
+            if local_gen_type != 0:
+                local_vor_polygons.plot(ax=ax3, cmap='Blues', edgecolor='white', alpha=0.4)
+
+            # vor_polygons.plot(ax=ax1, column='class', cmap='Blues', edgecolor='white', alpha=0.8)
+            # centroid_point.plot(ax=ax1, color='Red')
+
+            # plot the Bulk points
+            if(bulk_points > 0):
+                #vor_pts.plot(ax=ax1, markersize=.5, color='black')
+                vor_pts.plot(ax=ax2, markersize=.5, color='black')
+
+            if local_gen_type != 0:
+                local_gdf.plot(ax=ax3, markersize=0.5, color='white')
+                local_gdf.plot(ax=ax2, markersize=0.5, color='black')
+
+            fig.suptitle(title)  # Plot title text
+            ax1.set_title("Bulk points generation with Voronoi-based buffers")
+            ax1.axis("off")
+            ax2.set_title("Final Points generation")
+            ax2.axis("off")
+            ax3.set_title("Local Generation")
+            ax3.axis("off")
+            ax4.axis("off")
+            plt.axis('equal')
+
+        else:
+            fig, ax = plt.subplots(figsize=(8, 8))
+
+            source.plot(ax=ax, color='gray')
+            if (bulk_points > 0):
+                vor_pts.plot(ax=ax, markersize=.5, color='black')
+
+            if local_gen_type != 0:
+                local_gdf.plot(ax=ax, markersize=0.5, color='black')
+            fig.suptitle(title)  # Plot title text
+            ax.axis("off")
+            plt.axis('equal')
+
+        if(to_png):
+            plt.savefig(f"{filename.split('.')[0]}_points{png_filename}.png")
+        if(plot):
+            plt.show()
+
+    if(animate):
+        ani_points = vor_pts['geometry']
+        fig, ax = plt.subplots(figsize=(8, 6))
+        source.plot(ax=ax)
+
+        def animate(i):
+            current_pt = ani_points[i]
+            #ani_points.drop(index=[0])
+            print("Printing point...")
+            print(current_pt)
+            gpd.GeoSeries(current_pt).plot(ax=ax, markersize=1, color='black')
+
+        ani = FuncAnimation(fig, animate, total_pts, interval=5, repeat=False)
+        plt.show()
+
+    if(extra_var):
+        if(isinstance(extra_var_file, str)):
+            gdf_out[f'{extra_var_name}'] = csv_att(extra_var_file, total_pts)
+        elif(isinstance(extra_var_file, list)):
+            for i in range(len(extra_var_name)):
+                gdf_out[f'{extra_var_name[i]}'] = csv_att(extra_var_file[i], total_pts)
+        else:
+            print("Extra var input invalid")
+
+    # Exporting the generated points to an SQL file
+    if(to_sql):
+        gdf_to_sql(f"{filename.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name)
 
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
@@ -525,7 +834,7 @@ def radial_rpg(filename, total_pts, local_gen_type, local_ratio, local_vor_num, 
 def geometry_testing_plot(vor_num, total_pts):
     file_dirs = ['square.geojson', 'triangle.geojson', 'star.geojson', 's.geojson']
     for file in file_dirs:
-        radial_rpg(
+        radial_spatial_points(
             filename='TestingGeoJSONs/{}'.format(file),
             total_pts=total_pts,
             local_gen_type=1,
@@ -536,35 +845,13 @@ def geometry_testing_plot(vor_num, total_pts):
             to_geojson=False,
             to_png=True,
             plot=False,
-            animate=False
+            animate=False,
+            extra_var = False,
+            extra_var_name = 'default_var',
+            extra_var_file = 'default.csv'
         )
 
+radial_spatial_points()
 
-def main():
-    # No local generation, using true centroid
-    radial_rpg(
-        filename='london.geojson',total_pts=3000,local_gen_type=0,local_ratio=1,local_vor_num=16,
-        rand_centroid=False,to_sql=False,to_geojson=False,to_png=True, png_filename="no_local",plot=False,breakdown=False, animate=False
-    )
-    # Equal area, equal point local voronoi generation, using moving centroid
-    radial_rpg(
-        filename='london.geojson', total_pts=1500, local_gen_type=1, local_ratio=0, local_vor_num=16,
-        rand_centroid=True, to_sql=False, to_geojson=False, to_png=True, png_filename="eq_local", plot=False, breakdown=False, animate=False
-    )
-    # Variable area local generation, with points determined by region area, using true centroid
-    radial_rpg(
-        filename='london.geojson', total_pts=1500, local_gen_type=2, local_ratio=0, local_vor_num=16,
-        rand_centroid=False, to_sql=False, to_geojson=False, to_png=True, png_filename="var_local_area", plot=False, breakdown=False, animate=False
-    )
-
-    # Variable area local generation, with equal points in each region, using moving centroid
-    radial_rpg(
-        filename='london.geojson', total_pts=1500, local_gen_type=3, local_ratio=0, local_vor_num=16,
-        rand_centroid=False, to_sql=False, to_geojson=False, to_png=True, png_filename="var_local_eq", plot=False, breakdown=False, animate=False
-    )
-
-main()
-#geometry_testing_plot(16, 300)
-
-# To do:
-# Polygon is not iterable error (works after re-running)
+# radial_spatial_points uses the JSON parameter file
+# radial_points_gen is the same function but with function parameters
