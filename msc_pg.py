@@ -319,7 +319,7 @@ def csv_att(filename, num_values):
 def radial_points_gen(
         filename, total_pts=1000, local_gen_type=0, local_ratio=1, local_vor_num=0, rand_centroid=True,
         to_sql=False, to_geojson=False, to_png=False, png_filename='default', plot=True, breakdown=True,
-        animate=False, extra_var=False, extra_var_name='default_var', extra_var_file='default.csv'
+        extra_var=False, extra_var_name='default_var', extra_var_file='default.csv'
 ):
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
@@ -525,20 +525,6 @@ def radial_points_gen(
         if(plot):
             plt.show()
 
-    if(animate):
-        ani_points = vor_pts['geometry']
-        fig, ax = plt.subplots(figsize=(8, 6))
-        source.plot(ax=ax)
-
-        def animate(i):
-            current_pt = ani_points[i]
-            #ani_points.drop(index=[0])
-            print("Printing point...")
-            print(current_pt)
-            gpd.GeoSeries(current_pt).plot(ax=ax, markersize=1, color='black')
-
-        ani = FuncAnimation(fig, animate, total_pts, interval=5, repeat=False)
-        plt.show()
 
     if(extra_var):
         if(isinstance(extra_var_file, str)):
@@ -575,7 +561,6 @@ def radial_spatial_points():
     png_filename = params["png_filename"]
     plot = params["plot"]
     breakdown = params["breakdown"]
-    animate = params["animate"]
     extra_var = params["extra_var"]
     extra_var_name = params["extra_var_name"]
     extra_var_file = params["extra_var_file"]
@@ -798,20 +783,6 @@ def radial_spatial_points():
         if(plot):
             plt.show()
 
-    if(animate):
-        ani_points = vor_pts['geometry']
-        fig, ax = plt.subplots(figsize=(8, 6))
-        source.plot(ax=ax)
-
-        def animate(i):
-            current_pt = ani_points[i]
-            #ani_points.drop(index=[0])
-            print("Printing point...")
-            print(current_pt)
-            gpd.GeoSeries(current_pt).plot(ax=ax, markersize=1, color='black')
-
-        ani = FuncAnimation(fig, animate, total_pts, interval=5, repeat=False)
-        plt.show()
 
     if(extra_var):
         if(isinstance(extra_var_file, str)):
@@ -845,7 +816,6 @@ def geometry_testing_plot(vor_num, total_pts):
             to_geojson=False,
             to_png=True,
             plot=False,
-            animate=False,
             extra_var = False,
             extra_var_name = 'default_var',
             extra_var_file = 'default.csv'
