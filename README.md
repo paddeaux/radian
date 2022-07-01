@@ -19,7 +19,6 @@ Running the tool will require installation of the necessary third-party packages
 * `png_filename` : Specifies filename of above PNG file
 * `plot` : True/False, Indicates if the final dataset and boundary will be plotted after generation using matplotlib
 * `breakdown` : True/False. Indicates if the above plot will include a breakdown including 4 sepearate plots showing the macro, micro and final generation seperately.
-* `animate` : True/False. Needs to be removed
 * `extra_var` : True/False. Indicates if extra point columns from inputted CSV files will be included in dataset.
 * `extra_var_name` : List of strings indicating the variable name(s) for the extra CSV columns to be added.
 * `extra_var_file` : List of strings indicating the file names of the CSVs used for the extra variables.
