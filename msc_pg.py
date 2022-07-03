@@ -324,6 +324,11 @@ def radial_points_gen(
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
+    dens = total_pts/source.area
+    if (dens < 1)
+        print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
+        print("Minimum points density is 1 point / m^2.")
+        return
     min_x, min_y, max_x, max_y = source.total_bounds
 
     # Set the number used for Voronoi-based buffer generation to 256
@@ -359,6 +364,9 @@ def radial_points_gen(
         if local_vor_num > 256:
             local_vor_num = 256
             print("Max local_vor_num is 256!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         #bulk_points = total_pts * local_ratio
         local_points = total_pts * (1 - local_ratio)
         local_vor_points = local_points / local_vor_num
@@ -378,6 +386,9 @@ def radial_points_gen(
         if local_vor_num > 32:
             local_vor_num = 32
             print("Max poly_area value is 32!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         #bulk_points = total_pts * local_ratio
         local_points = total_pts * (1-local_ratio)
 
@@ -400,6 +411,9 @@ def radial_points_gen(
         if local_vor_num > 32:
             local_vor_num = 32
             print("Max poly_area value is 32!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         local_points = total_pts * (1 - local_ratio)
         local_vor_points = local_points / local_vor_num
 
@@ -568,6 +582,11 @@ def radial_spatial_points():
 # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(params['filename'])
     source = source.to_crs(epsg=3857)
+    dens = total_pts/source.area
+    if(dens < 1)
+        print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
+        print("Minimum points density is 1 point / m^2.")
+        return
     min_x, min_y, max_x, max_y = source.total_bounds
 
     # Set the number used for Voronoi-based buffer generation to 256
@@ -603,6 +622,9 @@ def radial_spatial_points():
         if local_vor_num > 256:
             local_vor_num = 256
             print("Max local_vor_num is 256!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         #bulk_points = total_pts * local_ratio
         local_points = total_pts * (1 - local_ratio)
         local_vor_points = local_points / local_vor_num
@@ -622,6 +644,9 @@ def radial_spatial_points():
         if local_vor_num > 32:
             local_vor_num = 32
             print("Max poly_area value is 32!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         #bulk_points = total_pts * local_ratio
         local_points = total_pts * (1-local_ratio)
 
@@ -644,6 +669,9 @@ def radial_spatial_points():
         if local_vor_num > 32:
             local_vor_num = 32
             print("Max poly_area value is 32!")
+        elif local_vor_num <= 0:
+            local_vor_num = 1
+            print("Min local_vor_num is 1!")
         local_points = total_pts * (1 - local_ratio)
         local_vor_points = local_points / local_vor_num
 
