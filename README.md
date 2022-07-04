@@ -28,31 +28,28 @@ The CSV files for adding additional variables to the data should be simply forma
 
 ## Section 1: Point Generation
 
-Point generation is currently available at two scales **Macro**, i.e. at an inputted main polygon level, and **Micro**, at a more localized level.
+Point generation is currently available at two scales **primary**, i.e. at an inputted main polygon level, and **secondary**, at a more localized level.
 
-### Macro Generation
+### Primary Generation
 
-A Python function has been created to produce randomly generated spatial data points, located inside a given Polygon in GeoJSON format. The function is able to produce multiple forms of random generationg using a mix of local and source-level generation.
+All gen types by default will utilize primary generation, with the `gen_type` parameter controlling the addition of secondary generation. Primary generation is carried out at the scale of the original source polygon, utilizing five voronoi-based buffers around the centroid in order to control generation. Each of these five regions are successively larger in size while also each being assinged an equal number of points. Thus resulting in the effect that points will concentrate towards the centre of the polygon with points density reducing further out towards the polygon boundaries. The primary method of generation utilizes Voronoi-based buffers to produce 5 concentric regions centred around the polygon centroid, with each of these regions being assigned an equal number of points to be generated. The result of this is points generationg which is concentrated towards the given centroid, with the density of points decreasing the furhter away from the centroid, **producing an effect similar to that of a real life set of points in a metropolitan area**.
 
-#### 1) Original Centroid
-The primary method of generation utilizes Voronoi-based buffers to produce 5 concentric regions centred around the polygon centroid, with each of these regions being assigned an equal number of points to be generated. The result of this is points generationg which is concentrated towards the given centroid, with the density of points decreasing the furhter away from the centroid, **producing an effect similar to that of a real life set of points in a metropolitan area**.
-
-#### 2) Moving Centroid
+#### Moving Centroid
 The above generation can be performed using the original true polygon centroid, or through the generation of a "moving centroid" which is a randomly generated centroid in an eliptical area around the true centroid. This will in turn cause the resulting Voronoi-buffer regions to be shifted in the x/y axis according to the position of the generated moving centroid in relation to the original centroid. **This reflects the real world fact of the administrative or metropolitan centre of a an area not necessarily being located at the exact geographic centre of the region.**
 
-### Micro Generation:
+### Secondary Generation:
 The function allows for more granular points generation through the addition of local-level generation in multiple ways.
 
-#### 0) No Local Generation:
+#### 0) No Secondary Generation:
 The function allows for just Macro-level generation, by setting the corresponding local parameters to zero, thus removing the local generation entirely
 
-#### 1) Equal Area Local Generation:
+#### 1) Equal Area Secondary Generation:
 The equal area local generation generates approximately equal-area Voronoi regions inside the source Polygon and then generates an equal proportion of points in each of these local polygons.
 
-#### 2) Variable Area Local Generation: Equal Points
+#### 2) Variable Area Secondary Generation: Equal Points
 This generation produces Voronoi regions of varying size, with smaller regions concentrated towards the centroid of the polygon. These regions are assigned an equal number of points in each.
 
-#### 3) Variable Area Local Generation: Points by Area
+#### 3) Variable Area Local Secondary: Points by Area
 This generation produces Voronoi regions of varying size, with smaller regions concentrated towards the centroid of the polygon. These regions are assigned points based on the area of each region, i.e. regions with larger area are allocated more points than smaller regions.
 
 ## Section 2: Output
@@ -67,9 +64,6 @@ The exporting to SQL requires a great deal more thought than the exporting to ge
 
 ### 3) Plotting
 The tool offers the ability to display the outputted points on a Matplotlib map to demonstrate both the final set of points as well as the intermediate steps and buffers/polygons generated to reach that last dataframe.
-
-### 4) Animation
-The tool has limited animation functionality. Currently the Matplotlib animate features are implemented to allow a Map animation showing each of the final points in the generated data set. The primary issue with this currently is the slow speed at which each frame of animation can be rendered.
 
 
 ## Planned Functionality:
