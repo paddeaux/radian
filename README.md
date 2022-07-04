@@ -5,14 +5,14 @@ This repo holds everything for my MSc in Data Science project. The project invol
 Running the tool will require installation of the necessary third-party packages including geopandas. The `msc_pg.py` file must be run in the same directory as the `parameters.json` file. The description and expected values for the parameters are as follows:
 * `filename` : This will be the name/directory of the .geojson polygon boundary within which we wish to generate points
 * `total_pts` : The total number of points to be generated within the polygon, approx. 1000-3000 recommended
-* `local_gen_type` : Controls the type of local-level generation to be used. Expecting a number between 0 and 3:
-    * 0 for no local generation
+* `gen_type` : Controls the type of local-level generation to be used. Expecting a number between 0 and 3:
+    * 0 for just primary generation
     * 1 for local generation within voronoi regions of approximately equal area, each with an equal proportion of points
     * 2 for local generation within voronoi regions of variable area, each allocated a proporation relative to their size, larger polygons with more points than smaller ones
     * 3 for local generation within voronoi regions of variable area, each with an equal proportion of points
-* `local_ratio` : Value between 0 and 1 that indicates the ratio of macro to micro points. 1 would result in 100% macro points, 0.5 would result in 50% macro and 50% micro etc.
-* `local_vor_num` : Number of local regions to be generated for local point generation
-* `rand_centroid` : True or false, indicates whether a moving random centroid is used in generation or if the origianl polygon centroid is used.
+* `ratio` : Value between 0 and 1 that indicates the ratio of macro to micro points. 1 would result in 100% macro points, 0.5 would result in 50% macro and 50% micro etc.
+* `vor_num` : Number of local regions to be generated for local point generation
+* `rand_centroid` : True or false, indicates whether a moving random centroid is used in the primary generation or if the original polygon centroid is used.
 * `to_sql` : True/False. Indicates if final dataset will be outputted to an SQL file
 * `to_geojson` : True/False. Indicates if final dataset will be outputted to a GeoJSON file
 * `to_png` : True/False. Indicates if plots of generated points will be exported in PNG format
