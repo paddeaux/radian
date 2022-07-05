@@ -604,9 +604,7 @@ def radial_spatial_points():
         vor_polygons = voronoi_gen(source, 256, 'eq')
 
     vor_polygons.crs = source.crs
-
         # Source-boundary Generation
-    bulk_points = total_pts * ratio
 
     #### Local level generation ###
 
@@ -629,8 +627,10 @@ def radial_spatial_points():
             vor_num = 1
             print("Min vor_num is 1!")
         #bulk_points = total_pts * ratio
-        local_points = total_pts * (1 - ratio)
-        local_vor_points = local_points / vor_num
+        local_points = int(total_pts * (1 - ratio))
+        print("Local points is: " + str(local_points))
+        local_vor_points = int(local_points / vor_num)
+        print("Local vor points is: " + str(local_vor_points))
 
         local_vor_polygons = voronoi_gen(source, vor_num, 'eq')
         print("Voronoi complete.")
@@ -690,13 +690,13 @@ def radial_spatial_points():
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
-    # Printing out exmaples of the generated Voronoi regions
-
+    # Printing out examples of the generated Voronoi regions
 
 
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
 
+    bulk_points = total_pts * ratio
     if(bulk_points > 0):
         # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
         # combining successive Voronoi regions to allow points generating inside them
@@ -706,16 +706,20 @@ def radial_spatial_points():
             vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
 
         # Generating points inside the merged Voronoi regions
-        vor_points = bulk_points / 5
-        vor_pts = gpd.GeoDataFrame()
-        for i in range(len(vor_all[0])):
-            ### should this be the rand???
-            if(rand_centroid):
-                gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
-            else:
-                gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
+        if bulk_points % 5 == 0:
+            vor_points = bulk_points / 5
+            vor_pts = gpd.GeoDataFrame()
+            for i in range(len(vor_all[0])):
+                ### should this be the rand???
+                if(rand_centroid):
+                    gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
+                else:
+                    gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
 
-            vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
+                vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
+        else:
+            vor_points = int(bulk_points / 5)
+            temp_bulk = vor_points * 5
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var):
@@ -756,7 +760,7 @@ def radial_spatial_points():
 
         # Setting plot title
         title = "Random Spatial Data - Radial Voronoi Generation\n" \
-                "{} total points at ratio {} : Macro Points = {}, Micro Points = {}\n".format(total_pts, ratio, bulk_points, total_pts - bulk_points)
+                "{} total points at ratio {} : Macro Points = {}, Micro Points = {}\n".format(total_pts, ratio, bulk_points, local_points)
         if (rand_centroid):
             title += "Using moving centroid\n"
         else:
@@ -775,7 +779,7 @@ def radial_spatial_points():
         else:
             title += "Local Generation: Error"
         if(breakdown):
-            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(12, 6))
+            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(12, 4))
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
@@ -843,9 +847,9 @@ def radial_spatial_points():
     # Exporting the generated points to an SQL file
     if(to_sql):
         gdf_to_sql(f"{filename.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name)
-
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
+        gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
         gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 

@@ -1,6 +1,6 @@
 {
 	"filename":"london.geojson",
-	"total_pts":3000,
+	"total_pts":1000,
 	"gen_type":1,
 	"ratio":0,
 	"vor_num":6,
@@ -9,7 +9,7 @@
 	"string_len": 15,
 	"timestamp_range": ["2022-01-01 00:00:00", "2022-12-31 23:59:59"],
 	"to_sql":true,
-	"to_geojson":false,
+	"to_geojson":true,
 	"to_png":false,
 	"png_filename":"default",
 	"plot":true,
