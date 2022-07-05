@@ -28,14 +28,51 @@ The CSV files for adding additional variables to the data should be simply forma
 
 ## Section 1: Point Generation
 
-Point generation is currently available at two scales **primary**, i.e. at an inputted main polygon level, and **secondary**, at a more localized level.
+Point generation occurs available at two scales **primary**, i.e. at an inputted main polygon level, and **secondary**, at a more localized level.
 
 ### Primary Generation
 
-All gen types by default will utilize primary generation, with the `gen_type` parameter controlling the addition of secondary generation. Primary generation is carried out at the scale of the original source polygon, utilizing five voronoi-based buffers around the centroid in order to control generation. Each of these five regions are successively larger in size while also each being assinged an equal number of points. Thus resulting in the effect that points will concentrate towards the centre of the polygon with points density reducing further out towards the polygon boundaries. The primary method of generation utilizes Voronoi-based buffers to produce 5 concentric regions centred around the polygon centroid, with each of these regions being assigned an equal number of points to be generated. The result of this is points generationg which is concentrated towards the given centroid, with the density of points decreasing the furhter away from the centroid, **producing an effect similar to that of a real life set of points in a metropolitan area**.
+All gen types by default will utilize primary generation, with the `gen_type` parameter controlling the addition of secondary generation. 
+Primary generation is carried out at the scale of the original source polygon, utilizing five voronoi-based buffers around the centroid in 
+order to control generation. Each of these five regions are successively larger in size while also each being assigned an equal number of points. 
+Thus resulting in the effect that points will concentrate towards the centre of the polygon with points density reducing further out towards the 
+polygon boundaries. The primary method of generation utilizes Voronoi-based buffers to produce 5 concentric regions centred around the polygon 
+centroid, with each of these regions being assigned an equal number of points to be generated. The result of this is points generation which 
+is concentrated towards the given centroid, with the density of points decreasing the further away from the centroid, **producing an effect similar 
+to that of a real life set of points in a metropolitan area**.
+
+#### Primary Generation Algorithm
+
+* The parameter file is read by the tool, and the source polygon is loaded
+* Using the specified centroid type (true or random) a set of 256 voronoi regions is generated within the bounds of the source polygon
+  * The distance from each of the voronoi region centroids to the centroid of the source polygon is calculated.
+  * Each voronoi is then assigned to one of five classes to represent the region around the centroid that the voronoi polygon belongs to
+  * The voronoi polygons are unioned by their class in order to produce five regions, centred around the centroid, of increasing size.
+  * These are the Voronoi-based buffers
+* The `ratio` parameter will determine the amount of points to be assigned to primary and secondary generation
+* The tool will first perform the secondary generation (if `gen_type` is > 0)
+  * A new set of Voronoi polygons (of an amount specified by the `vor_num` parameter) is created within the source polygon
+  * The specified secondary generation method is then applied iteratively to each of the generated secondary voronoi regions
+* Next the primary generation will take place:
+  * Stat at the first Voronoi-based buffer polygon
+  * Use the random point generation function, with the specified `gen_type`:
+    * Generate a circular buffer around the centroid point, with a radius 1/5th the size of the max bounds of the source polygon
+    * A fifth of the total primary points assinged will be generated iteratively
+    * If the point lies within both the current buffer and the source polygon, it is appended to a list
+    * Repeat the above step until all points for the current region have been generated
+    * Move to the next circular buffer and repeat the above
+  * Repeat the above step for each successive Voronoi-based buffer.
+* Merge the primary and secondary (if applicable) datasets into one single GeoDataFrame
+* Perform generation of random interger, string, and timestamp values and append values to each point in the gdf.
+* Generate addition metadata values from CSV files and append to each point in the gdf.
+* Output the file in whatever format specified, i.e. SQL, GeoJSON, Matplotlib Plot, PNG
 
 #### Moving Centroid
-The above generation can be performed using the original true polygon centroid, or through the generation of a "moving centroid" which is a randomly generated centroid in an eliptical area around the true centroid. This will in turn cause the resulting Voronoi-buffer regions to be shifted in the x/y axis according to the position of the generated moving centroid in relation to the original centroid. **This reflects the real world fact of the administrative or metropolitan centre of a an area not necessarily being located at the exact geographic centre of the region.**
+The above generation can be performed using the original true polygon centroid, or through the generation of a "moving centroid" 
+which is a randomly generated centroid in an eliptical area around the true centroid. This will in turn cause the resulting Voronoi-buffer 
+regions to be shifted in the x/y axis according to the position of the generated moving centroid in relation to the original centroid. 
+**This reflects the real world fact of the administrative or metropolitan centre of an area not necessarily being located at the exact 
+geographic centre of the region.**
 
 ### Secondary Generation:
 The function allows for more granular points generation through the addition of local-level generation in multiple ways.
