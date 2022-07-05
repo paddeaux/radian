@@ -13,7 +13,7 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+import contextily as cx
 
 # voroni generation packages
 from shapely.ops import cascaded_union
@@ -206,7 +206,7 @@ def gdf_to_sql(table_name, gdf, num_rows, extra_var, extra_var_name):
 # 'rand' = Points are generated around a randomly generated "moving centroid", with points concentrated around the centroid
 # 'cent' = Points are generated around the polygon centroid, with points centred around it
 
-def random_point_gen(poly, num_points, gen_type):
+def random_point_gen(poly, num_points, gen_type, return_buffers=False):
     min_x, min_y, max_x, max_y = poly.bounds
     cx, cy = poly.centroid.x, poly.centroid.y
     max_pt = Point(max_x, max_y)
@@ -307,7 +307,10 @@ def random_point_gen(poly, num_points, gen_type):
         gdf_buff = gpd.GeoDataFrame(df_buff, geometry='geometry')
         df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
-        return gdf
+        if return_buffers:
+            return gdf, gdf_buff
+        else:
+            return gdf
 
 def csv_att(filename, num_values):
     source = pd.read_csv(filename)
@@ -318,7 +321,7 @@ def csv_att(filename, num_values):
 # Radial points generation using function parameters
 def radial_points_gen(
         filename, total_pts=1000, gen_type=0, ratio=1, vor_num=0, rand_centroid=True,
-        to_sql=False, to_geojson=False, to_png=False, png_filename='default', plot=True, breakdown=True,
+        to_sql=False, to_geojson=False, to_png=False, png_filename='default', plot=True, basemap=False, breakdown=True,
         extra_var=False, extra_var_name='default_var', extra_var_file='default.csv'
 ):
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
@@ -569,11 +572,15 @@ def radial_spatial_points():
     ratio = params["ratio"]
     vor_num = params["vor_num"]
     rand_centroid = params["rand_centroid"]
+    int_range = params["int_range"]
+    string_len = params["string_len"]
+    timestamp_range = params["timestamp_range"]
     to_sql = params["to_sql"]
     to_geojson = params["to_geojson"]
     to_png = params["to_png"]
     png_filename = params["png_filename"]
     plot = params["plot"]
+    basemap = params["basemap"]
     breakdown = params["breakdown"]
     extra_var = params["extra_var"]
     extra_var_name = params["extra_var_name"]
@@ -590,15 +597,14 @@ def radial_spatial_points():
     min_x, min_y, max_x, max_y = source.total_bounds
 
     # Set the number used for Voronoi-based buffer generation to 256
-    vor_num = 256
 
     # This set of if-else statements determines how the Voronoi polygons are generated
     if(params['rand_centroid']):
         print("Generating Voronoi with Moving Centroid...")
-        vor_polygons = voronoi_gen(source, vor_num, 'rand')
+        vor_polygons = voronoi_gen(source, 256, 'rand')
     else:
         print("Generating Voronoi with Original...")
-        vor_polygons = voronoi_gen(source, vor_num, 'eq')
+        vor_polygons = voronoi_gen(source, 256, 'eq')
 
     vor_polygons.crs = source.crs
 
@@ -641,9 +647,9 @@ def radial_spatial_points():
 
     # Local generation with variable area Voronoi polygons with number of points based on area
     elif gen_type == 2:
-        if vor_num > 32:
-            vor_num = 32
-            print("Max poly_area value is 32!")
+        if vor_num > 128:
+            vor_num = 128
+            print("Max poly_area value is 128!")
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
@@ -666,9 +672,9 @@ def radial_spatial_points():
 
     # Local generation with variable area Voronoi polygons with equal number of points in each
     elif gen_type == 3:
-        if vor_num > 32:
-            vor_num = 32
-            print("Max poly_area value is 32!")
+        if vor_num > 128:
+            vor_num = 128
+            print("Max poly_area value is 128!")
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
@@ -689,14 +695,7 @@ def radial_spatial_points():
 
     # Printing out exmaples of the generated Voronoi regions
 
-    fig, ax = plt.subplots(figsize=(8, 8))
-    source.plot(ax=ax, color='gray')
-    local_vor_polygons.plot(ax=ax, cmap='Blues', edgecolor='white', alpha=0.8)
 
-    fig.suptitle("Local voronoi regions - variable area")  # Plot title text
-    ax.axis("off")
-    plt.axis('equal')
-    plt.show()
 
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
@@ -717,9 +716,17 @@ def radial_spatial_points():
             if(rand_centroid):
                 gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
             else:
-                gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
+                gdf, gdf_buff = random_point_gen(vor_all[0][i], vor_points, 'cent', True)
 
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    source.plot(ax=ax, color='gray')
+    gdf_buff.plot(ax=ax, cmap='Blues', edgecolor='white', alpha=0.2)
+    fig.suptitle("Local voronoi regions - variable area")  # Plot title text
+    ax.axis("off")
+    plt.axis('equal')
+    plt.show()
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var):
@@ -734,16 +741,16 @@ def radial_spatial_points():
         gdf_out = gdf_out.to_crs(epsg=4326)
 
         # Here we can set the extra random attribute variables
-        gdf_out['rand_str'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(10)) for i in range(total_pts)]
-        gdf_out['rand_int'] = [randint(0, 1000) for i in range(total_pts)]
+        gdf_out['rand_str'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(string_len)) for i in range(total_pts)]
+        gdf_out['rand_int'] = [randint(int_range[0], int_range[1]) for i in range(total_pts)]
 
         def random_dates(start, end, n):
             ts_start = start.value//10**9
             ts_end = end.value//10**9
             return list(pd.to_datetime(np.random.randint(ts_start, ts_end, n), unit='s'))
 
-        start = pd.to_datetime('2015-01-01')
-        end = pd.to_datetime('2022-06-09')
+        start = pd.to_datetime(timestamp_range[0])
+        end = pd.to_datetime(timestamp_range[1])
         gdf_out['rand_ts'] = random_dates(start, end, total_pts)
 
 
@@ -807,13 +814,16 @@ def radial_spatial_points():
 
         else:
             fig, ax = plt.subplots(figsize=(8, 8))
+            source = source.to_crs(epsg=3857)
+            gdf_plot = gdf_out.to_crs(epsg=3857)
 
-            source.plot(ax=ax, color='gray')
-            if (bulk_points > 0):
-                vor_pts.plot(ax=ax, markersize=.5, color='black')
+            gdf_plot.plot(ax=ax, markersize=0.5, color='black')
 
-            if gen_type != 0:
-                local_gdf.plot(ax=ax, markersize=0.5, color='black')
+            if (basemap):
+                cx.add_basemap(ax)
+            else:
+                source.plot(ax=ax, color='gray')
+
             fig.suptitle(title)  # Plot title text
             ax.axis("off")
             plt.axis('equal')

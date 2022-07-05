@@ -13,6 +13,9 @@ Running the tool will require installation of the necessary third-party packages
 * `ratio` : Value between 0 and 1 that indicates the ratio of macro to micro points. 1 would result in 100% macro points, 0.5 would result in 50% macro and 50% micro etc.
 * `vor_num` : Number of local regions to be generated for local point generation
 * `rand_centroid` : True or false, indicates whether a moving random centroid is used in the primary generation or if the original polygon centroid is used.
+* `int_range` : A list with length two, indicating the range of the random integers to be generated and assigned to each point, e.g. [1,100]
+* `string_len` : Integer value that specifies the length of the random string to be generated and assigned to each point.
+* `timestamp_range` : A list with length two, indicating the range within the random timestamp for each point is to be generated, e.g. ["2022-01-01 00:00:00", "2022-12-31 23:59:59"]
 * `to_sql` : True/False. Indicates if final dataset will be outputted to an SQL file
 * `to_geojson` : True/False. Indicates if final dataset will be outputted to a GeoJSON file
 * `to_png` : True/False. Indicates if plots of generated points will be exported in PNG format
