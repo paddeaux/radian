@@ -1,6 +1,6 @@
 {
 	"filename":"london.geojson",
-	"total_pts":657,
+	"total_pts":659,
 	"gen_type":1,
 	"ratio":0.7,
 	"vor_num":6,
@@ -13,8 +13,8 @@
 	"to_png":false,
 	"png_filename":"default",
 	"plot":true,
-	"breakdown":true,
-	"basemap": false,
+	"breakdown":false,
+	"basemap": true,
 	"animate":false,
 	"extra_var":false,
 	"extra_var_name":["var_string", "var_number", "var_number2"],
