@@ -1,8 +1,8 @@
 {
 	"filename":"london.geojson",
-	"total_pts":1000,
+	"total_pts":657,
 	"gen_type":1,
-	"ratio":0,
+	"ratio":0.7,
 	"vor_num":6,
 	"rand_centroid":false,
 	"int_range": [1,100],

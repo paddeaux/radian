@@ -245,15 +245,17 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
         # Number of sections is set as well as the number of points assigned to each section
         section_num = 5
         section_size = (radius * 0.8) / section_num
-        section_pts = num_points / section_num
+        section_pts = round(num_points / section_num)
 
         # Values used to shift point locations to account for the moving centroid generation
         cent_diff_x = (cx - centroid_point.x) / section_num
         cent_diff_y = (cy - centroid_point.y) / section_num
-
         # Points are generated section by section, along with randomly generated int and string variables
         for i in range(0, section_num):
-
+            if num_points % 5 != 0:
+                if i == 4:
+                    temp = section_pts * i
+                    section_pts = num_points - temp
             # Current circular buffer is created within which to generate points
             point_current = Point([centroid_point.x + (cent_diff_x * i), centroid_point.y + (cent_diff_y * i)])
             c_current = point_current.buffer(section_size * (i + 1))
@@ -290,8 +292,15 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
 
         section_num = 5
         section_size = (radius * 0.8) / section_num
-        section_pts = num_points / section_num
+        section_pts = round(num_points / section_num)
         for i in range(0, section_num):
+            if num_points % 5 != 0:
+                print("num_points % 5 is true")
+                if i == 4:
+                    print("i == section_num-1 is true")
+                    temp = section_pts * i
+                    section_pts = num_points - temp
+            print("Section pts is : " + str(section_pts))
             c_current = poly.centroid.buffer(section_size * (i+1))
             current_pts = 0
             while current_pts < section_pts:
@@ -627,7 +636,7 @@ def radial_spatial_points():
             vor_num = 1
             print("Min vor_num is 1!")
         #bulk_points = total_pts * ratio
-        local_points = int(total_pts * (1 - ratio))
+        local_points = round(total_pts * (1 - ratio))
         print("Local points is: " + str(local_points))
         local_vor_points = int(local_points / vor_num)
         print("Local vor points is: " + str(local_vor_points))
@@ -639,7 +648,13 @@ def radial_spatial_points():
 
         local_gdf = gpd.GeoDataFrame()
         for i in range(0, vor_num):
+            if local_points % vor_num != 0:
+                if i == vor_num-1:
+                    temp = local_vor_points * i
+                    local_vor_points = local_points - temp
+            print("Generating " + str(local_vor_points) + " secondary voronoi points")
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
+            print("Generated " + str(len(current)) + " actual points")
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True ))
 
     # Local generation with variable area Voronoi polygons with number of points based on area
@@ -651,7 +666,7 @@ def radial_spatial_points():
             vor_num = 1
             print("Min vor_num is 1!")
         #bulk_points = total_pts * ratio
-        local_points = total_pts * (1-ratio)
+        local_points = round(total_pts * (1-ratio))
 
         print("Generating Voronoi with Variable Area...")
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
@@ -662,6 +677,10 @@ def radial_spatial_points():
 
         local_gdf = gpd.GeoDataFrame()
         for i in range(0, vor_num):
+            if local_points % vor_num != 0:
+                if i == vor_num-1:
+                    temp = local_vor_points * i
+                    local_vor_points = local_points - temp
             area_prop = local_vor_polygons['geometry'][i].area / local_area
             current_local_points = int(round(local_points * area_prop))
             current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
@@ -675,7 +694,7 @@ def radial_spatial_points():
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
-        local_points = total_pts * (1 - ratio)
+        local_points = round(total_pts * (1 - ratio))
         local_vor_points = local_points / vor_num
 
         print("Generating Voronoi with Variable Area...")
@@ -687,6 +706,10 @@ def radial_spatial_points():
 
         local_gdf = gpd.GeoDataFrame()
         for i in range(0, vor_num):
+            if local_points % vor_num != 0:
+                if i == vor_num-1:
+                    temp = local_vor_points * i
+                    local_vor_points = local_points - temp
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
@@ -696,7 +719,7 @@ def radial_spatial_points():
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
 
-    bulk_points = total_pts * ratio
+    bulk_points = round(total_pts * ratio)
     if(bulk_points > 0):
         # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
         # combining successive Voronoi regions to allow points generating inside them
@@ -706,20 +729,20 @@ def radial_spatial_points():
             vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
 
         # Generating points inside the merged Voronoi regions
-        if bulk_points % 5 == 0:
-            vor_points = bulk_points / 5
-            vor_pts = gpd.GeoDataFrame()
-            for i in range(len(vor_all[0])):
-                ### should this be the rand???
-                if(rand_centroid):
-                    gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
-                else:
-                    gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
+        vor_points = round(bulk_points / 5)
+        vor_pts = gpd.GeoDataFrame()
+        for i in range(len(vor_all[0])):
+            ### should this be the rand???
+            if bulk_points % 5 != 0:
+                if i == len(vor_all[0])-1:
+                    temp = vor_points * i
+                    vor_points = bulk_points - temp
+            if(rand_centroid):
+                gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
+            else:
+                gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
 
-                vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
-        else:
-            vor_points = int(bulk_points / 5)
-            temp_bulk = vor_points * 5
+            vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var):
