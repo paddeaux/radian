@@ -623,6 +623,7 @@ def radial_spatial_points():
         # 2 for Variable-area Voronoi local generation with points determined by area
         # 3 for Variable-area Voronoi local generation with equal points in each Voronoi
 
+
     # Set no local generation as the default
     if gen_type > 3:
         gen_type = 0
@@ -635,14 +636,12 @@ def radial_spatial_points():
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
-        #bulk_points = total_pts * ratio
+
         local_points = round(total_pts * (1 - ratio))
-        print("Local points is: " + str(local_points))
         local_vor_points = int(local_points / vor_num)
-        print("Local vor points is: " + str(local_vor_points))
 
         local_vor_polygons = voronoi_gen(source, vor_num, 'eq')
-        print("Voronoi complete.")
+
         # the polyogn crs is set as the main polygon crs
         local_vor_polygons.crs = source.crs
 
@@ -652,9 +651,8 @@ def radial_spatial_points():
                 if i == vor_num-1:
                     temp = local_vor_points * i
                     local_vor_points = local_points - temp
-            print("Generating " + str(local_vor_points) + " secondary voronoi points")
+
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
-            print("Generated " + str(len(current)) + " actual points")
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True ))
 
     # Local generation with variable area Voronoi polygons with number of points based on area
@@ -665,10 +663,10 @@ def radial_spatial_points():
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
-        #bulk_points = total_pts * ratio
-        local_points = round(total_pts * (1-ratio))
 
-        print("Generating Voronoi with Variable Area...")
+        local_points = round(total_pts * (1 - ratio))
+        local_vor_points = int(local_points / vor_num)
+
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
 
         # calculating the area of each polygon to determine the proportion of points in each
@@ -676,6 +674,7 @@ def radial_spatial_points():
         local_area = local_area_union.area
 
         local_gdf = gpd.GeoDataFrame()
+
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
                 if i == vor_num-1:
@@ -683,6 +682,7 @@ def radial_spatial_points():
                     local_vor_points = local_points - temp
             area_prop = local_vor_polygons['geometry'][i].area / local_area
             current_local_points = int(round(local_points * area_prop))
+            print("current local points is :" + str(current_local_points))
             current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
@@ -694,8 +694,9 @@ def radial_spatial_points():
         elif vor_num <= 0:
             vor_num = 1
             print("Min vor_num is 1!")
+
         local_points = round(total_pts * (1 - ratio))
-        local_vor_points = local_points / vor_num
+        local_vor_points = round(local_points / vor_num)
 
         print("Generating Voronoi with Variable Area...")
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
