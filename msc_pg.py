@@ -826,27 +826,27 @@ def radial_spatial_points():
                 local_gdf.plot(ax=ax3, markersize=0.5, color='black')
 
             fig.suptitle(title)  # Plot title text
-            ax1.set_title("Primary Generation")
+            ax1.set_title("Primary Generation",y=0, pad=-14)
             ax1.axis("off")
-            ax2.set_title("Secondary Generation")
+            ax2.set_title("Secondary Generation",y=0, pad=-14)
             ax2.axis("off")
-            ax3.set_title("Final Points generation")
+            ax3.set_title("Final Points generation", y=0.18, pad=-14)
             ax3.axis("off")
             #ax4.axis("off")
             plt.axis('equal')
 
         else:
-            fig, ax = plt.subplots(figsize=(8, 8))
+            fig, ax = plt.subplots(figsize=(8, 5))
             source = source.to_crs(epsg=3857)
             gdf_plot = gdf_out.to_crs(epsg=3857)
 
-            if (basemap):
+            if basemap:
+                source.plot(ax=ax, facecolor="none", edgecolor='red')
+                gdf_plot.plot(ax=ax, markersize=1, color='blue')
                 cx.add_basemap(ax)
             else:
                 source.plot(ax=ax, color='gray')
-
-            gdf_plot.plot(ax=ax, markersize=0.5, color='black')
-
+                gdf_plot.plot(ax=ax, markersize=1, color='blue')
 
             fig.suptitle(title)  # Plot title text
             ax.axis("off")
