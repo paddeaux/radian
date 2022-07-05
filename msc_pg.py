@@ -307,10 +307,7 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
         gdf_buff = gpd.GeoDataFrame(df_buff, geometry='geometry')
         df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
-        if return_buffers:
-            return gdf, gdf_buff
-        else:
-            return gdf
+        return gdf
 
 def csv_att(filename, num_values):
     source = pd.read_csv(filename)
@@ -709,33 +706,32 @@ def radial_spatial_points():
             vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
 
         # Generating points inside the merged Voronoi regions
-        vor_points = total_pts / 5
+        vor_points = bulk_points / 5
         vor_pts = gpd.GeoDataFrame()
         for i in range(len(vor_all[0])):
             ### should this be the rand???
             if(rand_centroid):
                 gdf = random_point_gen(vor_all[0][i], vor_points, 'rand')
             else:
-                gdf, gdf_buff = random_point_gen(vor_all[0][i], vor_points, 'cent', True)
+                gdf = random_point_gen(vor_all[0][i], vor_points, 'cent')
 
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
-
-    fig, ax = plt.subplots(figsize=(8, 8))
-    source.plot(ax=ax, color='gray')
-    gdf_buff.plot(ax=ax, cmap='Blues', edgecolor='white', alpha=0.2)
-    fig.suptitle("Local voronoi regions - variable area")  # Plot title text
-    ax.axis("off")
-    plt.axis('equal')
-    plt.show()
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var):
         if(gen_type != 0 and bulk_points > 0):
             gdf_out = gpd.GeoDataFrame(vor_pts.append(local_gdf, ignore_index=True))
+            print("Vor_pts: Length of " + str(len(vor_pts)))
+            print("Local_gdf: Length of " + str(len(local_gdf)))
         elif(gen_type == 0):
             gdf_out = vor_pts
+            print("Vor_pts: Length of " + str(len(vor_pts)))
         else:
             gdf_out = local_gdf
+            print("Local_gdf: Length of " + str(len(local_gdf)))
+
+
+        print("GDF_OUT has a length of :" + str(len(gdf_out)))
 
         gdf_out = gdf_out.set_crs(epsg=3857)
         gdf_out = gdf_out.to_crs(epsg=4326)
@@ -779,37 +775,37 @@ def radial_spatial_points():
         else:
             title += "Local Generation: Error"
         if(breakdown):
-            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(8, 8))
+            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(12, 6))
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
             source.plot(ax=ax3, color='gray')
-            source.plot(ax=ax4, color='gray')
+            #source.plot(ax=ax4, color='gray')
 
-            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.8)
+            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.6)
             if gen_type != 0:
-                local_vor_polygons.plot(ax=ax3, cmap='Blues', edgecolor='white', alpha=0.4)
+                local_vor_polygons.plot(ax=ax2, cmap='Blues', edgecolor='white', alpha=0.4)
 
             # vor_polygons.plot(ax=ax1, column='class', cmap='Blues', edgecolor='white', alpha=0.8)
             # centroid_point.plot(ax=ax1, color='Red')
 
             # plot the Bulk points
             if(bulk_points > 0):
-                #vor_pts.plot(ax=ax1, markersize=.5, color='black')
-                vor_pts.plot(ax=ax2, markersize=.5, color='black')
+                vor_pts.plot(ax=ax1, markersize=.5, color='black')
+                vor_pts.plot(ax=ax3, markersize=.5, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax3, markersize=0.5, color='white')
-                local_gdf.plot(ax=ax2, markersize=0.5, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.5, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.5, color='black')
 
             fig.suptitle(title)  # Plot title text
-            ax1.set_title("Bulk points generation with Voronoi-based buffers")
+            ax1.set_title("Primary Generation")
             ax1.axis("off")
-            ax2.set_title("Final Points generation")
+            ax2.set_title("Secondary Generation")
             ax2.axis("off")
-            ax3.set_title("Local Generation")
+            ax3.set_title("Final Points generation")
             ax3.axis("off")
-            ax4.axis("off")
+            #ax4.axis("off")
             plt.axis('equal')
 
         else:
@@ -817,12 +813,13 @@ def radial_spatial_points():
             source = source.to_crs(epsg=3857)
             gdf_plot = gdf_out.to_crs(epsg=3857)
 
-            gdf_plot.plot(ax=ax, markersize=0.5, color='black')
-
             if (basemap):
                 cx.add_basemap(ax)
             else:
                 source.plot(ax=ax, color='gray')
+
+            gdf_plot.plot(ax=ax, markersize=0.5, color='black')
+
 
             fig.suptitle(title)  # Plot title text
             ax.axis("off")
