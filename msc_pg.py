@@ -552,7 +552,7 @@ def radial_spatial_points():
         else:
             title += "Local Generation: Error"
         if(breakdown):
-            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(12, 5))
+            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(13, 5))
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
