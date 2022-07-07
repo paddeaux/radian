@@ -337,7 +337,7 @@ def csv_att(filename, num_values):
     return name_dist
 
 # Radial points generation using JSON file for parameters
-def radial_spatial_points():
+def radial_spatial_points(png_filename='default'):
 
     filename = params["filename"]
     total_pts = params["total_pts"]
@@ -351,7 +351,7 @@ def radial_spatial_points():
     to_sql = params["to_sql"]
     to_geojson = params["to_geojson"]
     to_png = params["to_png"]
-    png_filename = params["png_filename"]
+    #png_filename = params["png_filename"]
     plot = params["plot"]
     basemap = params["basemap"]
     breakdown = params["breakdown"]
@@ -512,7 +512,7 @@ def radial_spatial_points():
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
-    if(to_sql or to_geojson or extra_var):
+    if(to_sql or to_geojson or extra_var or plot):
         if(gen_type != 0 and bulk_points > 0):
             gdf_out = gpd.GeoDataFrame(vor_pts.append(local_gdf, ignore_index=True))
         elif(gen_type == 0):
@@ -542,27 +542,29 @@ def radial_spatial_points():
         # create fig and axes to plot and compare points and Voronoi buffer regions
 
         # Setting plot title
-        title = "Random Spatial Data - Radial Voronoi Generation - Seed: {}\n" \
-                "{} total points at ratio {} : Primary Points = {}, Secondary Points = {}\n".format(glob_random_seed, total_pts, ratio, bulk_points, total_pts-bulk_points)
+        title = "Random Spatial Data Generation - Seed: {}\n" \
+                "{} total points at ratio of  {}:{} -> Primary Points = {}, Secondary Points = {}\n".format(glob_random_seed, total_pts, int(ratio*100),int((1-ratio)*100), bulk_points, total_pts-bulk_points)
         if (rand_centroid):
-            title += "Using moving centroid\n"
+            title += "Using moving centroid for primary generation\n"
         else:
-            title += "Using original centroid\n"
+            title += "Using original centroid for primary generation\n"
 
         # Local Generation type
         if (gen_type == 0):
-            title += "Local Generation: None\n"
+            title += "Secondary Generation: None\n"
         elif (gen_type == 1):
-            title += "Local Generation: Equal-area Voronoi, {} local regions\n".format(vor_num)
+            title += "Secondary Generation: Equal-area Voronoi, {} local regions\n".format(vor_num)
         elif (gen_type == 2):
-            title += "Local Generation: Variable-area Voronoi - Points by Area, {} local regions\n".format(
+            title += "Secondary Generation: Variable-area Voronoi - Points by Area, {} local regions\n".format(
                 vor_num)
         elif (gen_type == 3):
-            title += "Local Generation: Variable-area Voronoi - Equal Points, {} local regions\n".format(vor_num)
+            title += "Secondary Generation: Variable-area Voronoi - Equal Points, {} local regions\n".format(vor_num)
         else:
-            title += "Local Generation: Error"
+            title += "Secondary Generation: Error"
+
         if(breakdown):
-            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(13, 5))
+            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(16, 4.25))
+            fig.tight_layout()
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
@@ -577,22 +579,22 @@ def radial_spatial_points():
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=.5, color='black')
-                vor_pts.plot(ax=ax3, markersize=.5, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.1, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.1, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.5, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.5, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.1, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.1, color='black')
 
             fig.suptitle(title)  # Plot title text
-            ax1.set_title("Primary Generation",y=0, pad=-14)
+            ax1.set_title("Primary Generation",y=0.05, pad=-14)
             ax1.axis("off")
-            ax2.set_title("Secondary Generation",y=0, pad=-14)
+            ax2.set_title("Secondary Generation",y=0.05, pad=-14)
             ax2.axis("off")
-            ax3.set_title("Final Points generation", y=0.18, pad=-14)
+            ax3.set_title("Final Points generation",y=0.05, pad=-14)
             ax3.axis("off")
-            #ax4.axis("off")
-            plt.axis('equal')
+
+            #plt.axis('equal')
 
         else:
             fig, ax = plt.subplots(figsize=(8,6))
@@ -635,7 +637,8 @@ def radial_spatial_points():
         gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
-radial_spatial_points()
+for i in range(0,10):
+    radial_spatial_points(png_filename=f'{i}')
 
 # radial_spatial_points uses the JSON parameter file
 # radial_points_gen is the same function but with function parameters

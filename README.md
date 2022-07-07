@@ -25,6 +25,8 @@ Running the tool will require installation of the necessary third-party packages
 * `extra_var` : True/False. Indicates if extra point columns from inputted CSV files will be included in dataset.
 * `extra_var_name` : List of strings indicating the variable name(s) for the extra CSV columns to be added.
 * `extra_var_file` : List of strings indicating the file names of the CSVs used for the extra variables.
+* `set_seed` : True/False, indicates a seed will be used for the generation, allows for reproducibility. 
+* `seed` : Integer seed value for random generation.
 
 ### Note on the CSV files
 The CSV files for adding additional variables to the data should be simply formatted into two columns, one with a list of potential values, and a second column with weights indicating the frequency at which each value should occur in the final dataset.
