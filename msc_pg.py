@@ -36,10 +36,13 @@ from shapely.geometry import Polygon, Point, shape, GeometryCollection, LineStri
 
 params = json.load(open('parameters.json'))
 
-use_seed = params["use_seed"]
+set_seed = params["set_seed"]
 
-if use_seed:
-    glob_random_seed = 100
+if set_seed:
+    glob_random_seed = params["seed"]
+    random.seed(glob_random_seed)
+else:
+    glob_random_seed = random.randint(0, 2147483647)
     random.seed(glob_random_seed)
 
 def voronoi_gen(poly, vor_num, gen_type):
@@ -127,10 +130,7 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     feature_coords = np.array([[e.x, e.y] for e in source.geometry])
 
     # A kmeans object is created using the specified number of clusters
-    if use_seed:
-        kmeans = KMeans(num_cluster, random_state=glob_random_seed)
-    else:
-        kmeans = KMeans(num_cluster)
+    kmeans = KMeans(num_cluster, random_state=glob_random_seed)
     kmeans.fit(feature_coords)
 
     # The cluster centres are stored as centroids, and this list is put into a GeoDataFrame and returned
@@ -542,8 +542,8 @@ def radial_spatial_points():
         # create fig and axes to plot and compare points and Voronoi buffer regions
 
         # Setting plot title
-        title = "Random Spatial Data - Radial Voronoi Generation\n" \
-                "{} total points at ratio {} : Primary Points = {}, Secondary Points = {}\n".format(total_pts, ratio, bulk_points, total_pts-bulk_points)
+        title = "Random Spatial Data - Radial Voronoi Generation - Seed: {}\n" \
+                "{} total points at ratio {} : Primary Points = {}, Secondary Points = {}\n".format(glob_random_seed, total_pts, ratio, bulk_points, total_pts-bulk_points)
         if (rand_centroid):
             title += "Using moving centroid\n"
         else:

@@ -1,8 +1,8 @@
 {
 	"filename":"london.geojson",
 	"total_pts":200,
-	"gen_type":0,
-	"ratio":1,
+	"gen_type":1,
+	"ratio":0.5,
 	"vor_num":6,
 	"rand_centroid":false,
 	"int_range": [1,100],
@@ -18,6 +18,6 @@
 	"extra_var":false,
 	"extra_var_name":["var_string", "var_number", "var_number2"],
 	"extra_var_file":["restaurant.csv", "numbers.csv", "numbers.csv"],
-	"use_seed": true,
-	"seed" : 100
+	"set_seed": false,
+	"seed" : 1878019349
 }
