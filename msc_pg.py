@@ -112,19 +112,48 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     # Circular buffer visualization
     buffers = []
+    title = "Voronoi-based Buffer Generation:\n"
     for i in range(5):
-        centroid = shapely.geometry.Point(poly.centroid.x, poly.centroid.y)
-        c_current = centroid.buffer(dist_break * (i + 1))
-        buffers.append(c_current)
+        if gen_type != 'rand':
+            centroid = shapely.geometry.Point(poly.centroid.x, poly.centroid.y)
+            c_current = centroid.buffer(dist_break * (i + 1))
+            buffers.append(c_current)
+        else:
+            centroid = gdf_centroid[0]
+            c_current = centroid.buffer(dist_break * (i + 1))
+            buffers.append(c_current)
 
     circ_df = pd.DataFrame(buffers, columns=['geometry'])
     circ_gdf = gpd.GeoDataFrame(circ_df, geometry='geometry')
 
-    fig, ax = plt.subplots(figsize=(8, 6))
-    gdf_poly.plot(ax=ax, cmap='Blues',edgecolor='white')
-    circ_gdf.plot(ax=ax, edgecolor='black')
-    plt.show()
+    vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
+    fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
+    fig.tight_layout()
+
+    poly.plot(ax=ax1, color='gray')
+    poly.plot(ax=ax2, color='gray')
+
+
+    gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
+    circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
+
+    vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
+    circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
+
+    if gen_type == 'rand':
+        title += "Using moving centroid"
+    else:
+        title += "Using original centroid"
+
+    fig.suptitle(title)  # Plot title text
+    ax1.set_title("256 Voronoi Regions", y=0.05, pad=-14)
+    ax1.axis("off")
+    ax2.set_title("Unioned Voronoi-Based Buffers", y=0.05, pad=-14)
+    ax2.axis("off")
+
+    # plt.axis('equal')
+    plt.show()
 
     return gdf_poly
 
