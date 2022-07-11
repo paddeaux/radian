@@ -110,6 +110,22 @@ def voronoi_gen(poly, vor_num, gen_type):
     gdf_poly = gdf_poly.sort_values(by='dist_to_centre')
     gdf_poly['class'] = pd.cut(gdf_poly['dist_to_centre'], [0, dist_break, dist_break*2, dist_break*3, dist_break*4, np.inf], labels=[1,2,3,4,5])
 
+    # Circular buffer visualization
+    buffers = []
+    for i in range(5):
+        centroid = shapely.geometry.Point(poly.centroid.x, poly.centroid.y)
+        c_current = centroid.buffer(dist_break * (i + 1))
+        buffers.append(c_current)
+
+    circ_df = pd.DataFrame(buffers, columns=['geometry'])
+    circ_gdf = gpd.GeoDataFrame(circ_df, geometry='geometry')
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    gdf_poly.plot(ax=ax, cmap='Blues',edgecolor='white')
+    circ_gdf.plot(ax=ax, edgecolor='black')
+    plt.show()
+
+
     return gdf_poly
 
 # This fucntion takes in a Shapely Polygon, number of points, number of clusters, and a generation type, and returns
@@ -327,8 +343,10 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
             buffers.append(c_current)
         df_buff = pd.DataFrame(buffers, columns=['geometry'])
         gdf_buff = gpd.GeoDataFrame(df_buff, geometry='geometry')
+
         df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
+
         return gdf
 
 def csv_att(filename, num_values):
@@ -570,7 +588,7 @@ def radial_spatial_points(png_filename='default'):
             source.plot(ax=ax2, color='gray')
             source.plot(ax=ax3, color='gray')
 
-            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.6)
+            #vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.6)
             if gen_type != 0:
                 local_vor_polygons.plot(ax=ax2, cmap='Blues', edgecolor='white', alpha=0.4)
 
@@ -637,7 +655,7 @@ def radial_spatial_points(png_filename='default'):
         gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
-for i in range(0,10):
+for i in range(0,1):
     radial_spatial_points(png_filename=f'{i}')
 
 # radial_spatial_points uses the JSON parameter file
