@@ -126,32 +126,32 @@ def voronoi_gen(poly, vor_num, gen_type):
     circ_df = pd.DataFrame(buffers, columns=['geometry'])
     circ_gdf = gpd.GeoDataFrame(circ_df, geometry='geometry')
 
-    #vor_union = gdf_poly.dissolve(by='class', as_index=False)
+    vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
-    #fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
-    #fig.tight_layout()
+    fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
+    fig.tight_layout()
 
-    #poly.plot(ax=ax1, color='gray')
-    #poly.plot(ax=ax2, color='gray')
-
-
-    #gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
-    #circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
-
-    #vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
-    #circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
-
-    #if gen_type == 'rand':
-    #    title += "Using moving centroid"
-    #else:
-    #    title += "Using original centroid"
+    poly.plot(ax=ax1, color='gray')
+    poly.plot(ax=ax2, color='gray')
 
 
-    #ax1.axis("off")
-    #ax2.axis("off")
+    gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
+    circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
 
-    # plt.axis('equal')
-    #plt.show()
+    vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
+    circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
+
+    if gen_type == 'rand':
+        title += "Using moving centroid"
+    else:
+        title += "Using original centroid"
+
+
+    ax1.axis("off")
+    ax2.axis("off")
+
+    plt.axis('equal')
+    plt.show()
 
     return gdf_poly
 
@@ -328,6 +328,9 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
+                        print("+ point generated")
+                    else:
+                        print("- rejecting point")
                 if (current_pts >= section_pts):
                     section_num += 1
 
@@ -365,6 +368,9 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
+                        print("+ point generated")
+                    else:
+                        print("point rejected")
                 if (current_pts >= section_pts):
                     section_num += 1
             buffers.append(c_current)
@@ -435,6 +441,7 @@ def radial_spatial_points(png_filename='default'):
         # 2 for Variable-area Voronoi local generation with points determined by area
         # 3 for Variable-area Voronoi local generation with equal points in each Voronoi
 
+    print("Starting secondary generation...")
 
     # Set no local generation as the default
     if gen_type > 3:
@@ -525,12 +532,14 @@ def radial_spatial_points(png_filename='default'):
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
-    # Printing out examples of the generated Voronoi regions
+    print("Secondary generation complete.")
 
-
+    print("Combining Voronoi-based buffers...")
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
+    print("Buffers combined.")
 
+    print("Primary generation start...")
     bulk_points = round(total_pts * ratio)
     if(bulk_points > 0):
         # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
@@ -556,6 +565,8 @@ def radial_spatial_points(png_filename='default'):
 
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
 
+    print("Primary generation complete.")
+
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var or plot):
         if(gen_type != 0 and bulk_points > 0):
@@ -580,7 +591,6 @@ def radial_spatial_points(png_filename='default'):
         start = pd.to_datetime(timestamp_range[0])
         end = pd.to_datetime(timestamp_range[1])
         gdf_out['rand_ts'] = random_dates(start, end, total_pts)
-
 
     # Plotting of generated points and Voronoi regions
     if(plot or to_png):
@@ -624,12 +634,12 @@ def radial_spatial_points(png_filename='default'):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.75, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.75, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.4, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.75, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.75, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
 
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
