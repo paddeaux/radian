@@ -126,34 +126,32 @@ def voronoi_gen(poly, vor_num, gen_type):
     circ_df = pd.DataFrame(buffers, columns=['geometry'])
     circ_gdf = gpd.GeoDataFrame(circ_df, geometry='geometry')
 
-    vor_union = gdf_poly.dissolve(by='class', as_index=False)
+    #vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
-    fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
-    fig.tight_layout()
+    #fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
+    #fig.tight_layout()
 
-    poly.plot(ax=ax1, color='gray')
-    poly.plot(ax=ax2, color='gray')
+    #poly.plot(ax=ax1, color='gray')
+    #poly.plot(ax=ax2, color='gray')
 
 
-    gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
-    circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
+    #gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
+    #circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
 
-    vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
-    circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
+    #vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
+    #circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
 
-    if gen_type == 'rand':
-        title += "Using moving centroid"
-    else:
-        title += "Using original centroid"
+    #if gen_type == 'rand':
+    #    title += "Using moving centroid"
+    #else:
+    #    title += "Using original centroid"
 
-    #fig.suptitle(title)  # Plot title text
-    #ax1.set_title("256 Voronoi Regions", y=0.05, pad=-14)
-    ax1.axis("off")
-    #ax2.set_title("Unioned Voronoi-Based Buffers", y=0.05, pad=-14)
-    ax2.axis("off")
+
+    #ax1.axis("off")
+    #ax2.axis("off")
 
     # plt.axis('equal')
-    plt.show()
+    #plt.show()
 
     return gdf_poly
 
@@ -610,14 +608,14 @@ def radial_spatial_points(png_filename='default'):
             title += "Secondary Generation: Error"
 
         if(breakdown):
-            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(16, 4.25))
+            fig, ((ax1, ax2, ax3)) = plt.subplots(1, 3, figsize=(16, 5))
             fig.tight_layout()
 
             source.plot(ax=ax1, color='gray')
             source.plot(ax=ax2, color='gray')
             source.plot(ax=ax3, color='gray')
 
-            #vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.6)
+            vor_union.plot(ax=ax1, cmap='Blues', edgecolor='white', alpha=0.6)
             if gen_type != 0:
                 local_vor_polygons.plot(ax=ax2, cmap='Blues', edgecolor='white', alpha=0.4)
 
@@ -626,19 +624,19 @@ def radial_spatial_points(png_filename='default'):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.1, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.1, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.75, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.75, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.1, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.1, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.75, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.75, color='black')
 
-            fig.suptitle(title)  # Plot title text
-            ax1.set_title("Primary Generation",y=0.05, pad=-14)
+            #fig.suptitle(title)  # Plot title text
+            #ax1.set_title("Primary Generation",y=0.05, pad=-14)
             ax1.axis("off")
-            ax2.set_title("Secondary Generation",y=0.05, pad=-14)
+            #ax2.set_title("Secondary Generation",y=0.05, pad=-14)
             ax2.axis("off")
-            ax3.set_title("Final Points generation",y=0.05, pad=-14)
+            #ax3.set_title("Final Points generation",y=0.05, pad=-14)
             ax3.axis("off")
 
             #plt.axis('equal')
