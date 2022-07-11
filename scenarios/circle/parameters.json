@@ -1,5 +1,5 @@
 {
-	"filename":"geometric_json/circle.geojson",
+	"filename":"scenarios/circle/circle.geojson",
 	"total_pts":3000,
 	"gen_type":1,
 	"ratio":0.5,
@@ -11,7 +11,7 @@
 	"to_sql":false,
 	"to_geojson":false,
 	"to_png":true,
-	"png_filename":"10",
+	"png_filename":"1",
 	"plot":false,
 	"breakdown":true,
 	"basemap": true,
