@@ -146,10 +146,10 @@ def voronoi_gen(poly, vor_num, gen_type):
     else:
         title += "Using original centroid"
 
-    fig.suptitle(title)  # Plot title text
-    ax1.set_title("256 Voronoi Regions", y=0.05, pad=-14)
+    #fig.suptitle(title)  # Plot title text
+    #ax1.set_title("256 Voronoi Regions", y=0.05, pad=-14)
     ax1.axis("off")
-    ax2.set_title("Unioned Voronoi-Based Buffers", y=0.05, pad=-14)
+    #ax2.set_title("Unioned Voronoi-Based Buffers", y=0.05, pad=-14)
     ax2.axis("off")
 
     # plt.axis('equal')
