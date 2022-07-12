@@ -128,30 +128,30 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
-    fig, ((ax1, ax2)) = plt.subplots(1, 2, figsize=(12, 6))
-    fig.tight_layout()
+    #fig, axs = plt.subplots(1,6, figsize=(16, 3), sharey=True)
+    #fig.tight_layout()
 
-    poly.plot(ax=ax1, color='gray')
-    poly.plot(ax=ax2, color='gray')
-
-
-    gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
-    circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
-
-    vor_union.plot(ax=ax2, cmap='Blues', edgecolor='white')
-    circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
-
-    if gen_type == 'rand':
-        title += "Using moving centroid"
-    else:
-        title += "Using original centroid"
+    #poly.plot(ax=ax1, color='gray')
+    #poly.plot(ax=ax2, color='gray')
 
 
-    ax1.axis("off")
-    ax2.axis("off")
+    #gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
+    #circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
 
-    plt.axis('equal')
-    plt.show()
+
+    #circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
+
+    #if gen_type == 'rand':
+    #    title += "Using moving centroid"
+    #else:
+    #    title += "Using original centroid"
+
+
+    #ax1.axis("off")
+    #ax2.axis("off")
+
+    #plt.axis('equal')
+    #plt.show()
 
     return gdf_poly
 
@@ -499,7 +499,7 @@ def radial_spatial_points(png_filename='default'):
                 current_local_points = int(local_points - len(local_gdf))
             else:
                 area_prop = local_vor_polygons['geometry'][i].area / local_area
-                current_local_points = int(round(local_points * area_prop))
+                current_local_points = int(local_points * area_prop)
             print("current local points is :" + str(current_local_points))
             current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
