@@ -7,6 +7,7 @@ Created on Tue Apr 19 15:54:29 2022
 import random
 from random import randint
 
+import os
 import json
 import string
 import geopandas as gpd
@@ -34,16 +35,6 @@ from shapely.geometry import Polygon, Point, shape, GeometryCollection, LineStri
 # 'area' = Variable-area generation (Smaller Voronoi towards the centroid, larger towards the borders)
 # 'rand' = Equal-area Voronoi generation centred around a random "moving centroid"
 
-params = json.load(open('parameters.json'))
-
-set_seed = params["set_seed"]
-
-if set_seed:
-    glob_random_seed = params["seed"]
-    random.seed(glob_random_seed)
-else:
-    glob_random_seed = random.randint(0, 2147483647)
-    random.seed(glob_random_seed)
 
 def voronoi_gen(poly, vor_num, gen_type):
     poly = poly.to_crs(epsg=3857)
@@ -186,14 +177,14 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
 # This function takes in a GeoDataFrame of randomly generated points (along with additional random variables)
 # and produces a SQL file that will allow a PostgreSQL table to be created containing the data
 
-def gdf_to_sql(table_name, gdf, num_rows, extra_var, extra_var_name):
+def gdf_to_sql(table_name, gdf, num_rows, extra_var, extra_var_name, png_filename, directory):
     # Opens up an SQL file based on the table name, writes to the file and closes it
-    sqlFile = open(f'{table_name}_SQL.sql', "w")
+    sqlFile = open(f'{directory}/SQL/{table_name}_points_{png_filename}.sql', "w")
     sqlFile.write("")
     sqlFile.close()
 
     # Opens up the SQL file to append lines to it
-    sqlFile = open(f'{table_name}_SQL.sql', "a")
+    sqlFile = open(f'{directory}/SQL/{table_name}_points_{png_filename}.sql', "a")
 
     # SQL statments to create the table as well as drop if exists the table are appended
     sqlFile.write('DROP TABLE IF EXISTS {}; \n'.format(table_name))
@@ -254,7 +245,7 @@ def gdf_to_sql(table_name, gdf, num_rows, extra_var, extra_var_name):
         # Write query string to SQL file
         sqlFile.write(query)
 
-    print("Successfully printed {} rows to {} with table name: {}.".format(num_rows, f'{table_name}_SQL.sql', table_name))
+    print("Successfully printed {} rows to {} with table name: {}.".format(num_rows, f'{table_name}_points_{png_filename}.sql', table_name))
 
 # This function takes in a Shapely Polygon, number of points to be generated, and generation type, and produces
 # a set of random points within that polygon, generated in a pattern set by the generation type:
@@ -328,9 +319,6 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
-                        print("+ point generated")
-                    else:
-                        print("- rejecting point")
                 if (current_pts >= section_pts):
                     section_num += 1
 
@@ -368,9 +356,6 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
-                        print("+ point generated")
-                    else:
-                        print("point rejected")
                 if (current_pts >= section_pts):
                     section_num += 1
             buffers.append(c_current)
@@ -388,9 +373,10 @@ def csv_att(filename, num_values):
     return name_dist
 
 # Radial points generation using JSON file for parameters
-def radial_spatial_points(png_filename='default'):
+def radial_spatial_points(png_filename, directory):
 
     filename = params["filename"]
+    save_name = os.path.basename(filename)
     total_pts = params["total_pts"]
     gen_type = params["gen_type"]
     ratio = params["ratio"]
@@ -411,7 +397,7 @@ def radial_spatial_points(png_filename='default'):
     extra_var_file = params["extra_var_file"]
 
 # Reading in the GeoJSON file and setting the CRS to a meter-based projection
-    source = gpd.read_file(params['filename'])
+    source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
     dens = total_pts/source.area[0]
     if(dens > 1):
@@ -634,12 +620,12 @@ def radial_spatial_points(png_filename='default'):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.4, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.2, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.2, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.2, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.2, color='black')
 
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
@@ -669,7 +655,7 @@ def radial_spatial_points(png_filename='default'):
             plt.axis('equal')
 
         if(to_png):
-            plt.savefig(f"{filename.split('.')[0]}_points{png_filename}.png")
+            plt.savefig(f"{directory}/PNG/{save_name.split('.')[0]}_points_{png_filename}.png")
         if(plot):
             plt.show()
 
@@ -685,15 +671,32 @@ def radial_spatial_points(png_filename='default'):
 
     # Exporting the generated points to an SQL file
     if(to_sql):
-        gdf_to_sql(f"{filename.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name)
+        gdf_to_sql(f"{save_name.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name, png_filename, directory)
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
         gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
-        gdf_out.to_file(f"{filename.split('.')[0]}_points_4326.geojson", driver='GeoJSON')
+        gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
-for i in range(0,1):
-    radial_spatial_points(png_filename=f'{i}')
+gen_dir = "GenType_3"
+sub_folder = ["MovingCentroid", "OriginalCentroid"]
+sub_sub_folder = ["PrimaryOnly", "SecondaryOnly", "Standard"]
+
+for sub in range(0,len(sub_folder)):
+    for sub_sub in range(0, len(sub_sub_folder)):
+        directory = 'scenarios/{}/{}/{}'.format(gen_dir, sub_folder[sub],sub_sub_folder[sub_sub])
+        params = json.load(open("{}/parameters.json".format(directory)))
+        set_seed = params["set_seed"]
+
+        if set_seed:
+            glob_random_seed = params["seed"]
+            random.seed(glob_random_seed)
+        else:
+            glob_random_seed = random.randint(0, 2147483647)
+            random.seed(glob_random_seed)
+
+        for k in range(0,10):
+            radial_spatial_points(png_filename=f'{k}', directory=directory)
 
 # radial_spatial_points uses the JSON parameter file
 # radial_points_gen is the same function but with function parameters
