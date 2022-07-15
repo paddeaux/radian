@@ -388,7 +388,7 @@ def radial_spatial_points(png_filename, directory):
     to_sql = params["to_sql"]
     to_geojson = params["to_geojson"]
     to_png = params["to_png"]
-    #png_filename = params["png_filename"]
+    png_filename = params["png_filename"]
     plot = params["plot"]
     basemap = params["basemap"]
     breakdown = params["breakdown"]
@@ -620,12 +620,12 @@ def radial_spatial_points(png_filename, directory):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.2, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.2, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.5, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.2, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.2, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
 
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
@@ -638,19 +638,21 @@ def radial_spatial_points(png_filename, directory):
             #plt.axis('equal')
 
         else:
-            fig, ax = plt.subplots(figsize=(8,6))
+            fig, ax = plt.subplots(figsize=(6,6))
             source = source.to_crs(epsg=3857)
             gdf_plot = gdf_out.to_crs(epsg=3857)
 
             if basemap:
                 source.plot(ax=ax, facecolor="none", edgecolor='red')
                 gdf_plot.plot(ax=ax, markersize=1, color='red', edgecolor='black')
-                cx.add_basemap(ax)
+                cx.add_basemap(ax, attribution=False)
             else:
                 source.plot(ax=ax, color='gray')
                 gdf_plot.plot(ax=ax, markersize=1, color='red')
 
-            fig.suptitle(title)  # Plot title text
+            title = "Seed: " + str(glob_random_seed)
+            #fig.suptitle(title)  # Plot title text
+            ax.set_title(title)
             ax.axis("off")
             plt.axis('equal')
 
@@ -678,25 +680,40 @@ def radial_spatial_points(png_filename, directory):
         gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
-gen_dir = "GenType_3"
-sub_folder = ["MovingCentroid", "OriginalCentroid"]
-sub_sub_folder = ["PrimaryOnly", "SecondaryOnly", "Standard"]
+# remove from function to avoid scope errors
+def scenarios():
+    gen_dir = "GenType_3"
+    sub_folder = ["MovingCentroid", "OriginalCentroid"]
+    sub_sub_folder = ["PrimaryOnly", "SecondaryOnly", "Standard"]
 
-for sub in range(0,len(sub_folder)):
-    for sub_sub in range(0, len(sub_sub_folder)):
-        directory = 'scenarios/{}/{}/{}'.format(gen_dir, sub_folder[sub],sub_sub_folder[sub_sub])
-        params = json.load(open("{}/parameters.json".format(directory)))
-        set_seed = params["set_seed"]
+    for sub in range(0,len(sub_folder)):
+        for sub_sub in range(0, len(sub_sub_folder)):
+            directory = 'scenarios/{}/{}/{}'.format(gen_dir, sub_folder[sub],sub_sub_folder[sub_sub])
+            params = json.load(open("{}/parameters.json".format(directory)))
+            set_seed = params["set_seed"]
 
-        if set_seed:
-            glob_random_seed = params["seed"]
-            random.seed(glob_random_seed)
-        else:
-            glob_random_seed = random.randint(0, 2147483647)
-            random.seed(glob_random_seed)
+            if set_seed:
+                glob_random_seed = params["seed"]
+                random.seed(glob_random_seed)
+            else:
+                glob_random_seed = random.randint(0, 2147483647)
+                random.seed(glob_random_seed)
 
-        for k in range(0,10):
-            radial_spatial_points(png_filename=f'{k}', directory=directory)
+            for k in range(0,10):
+                radial_spatial_points(png_filename=f'{k}', directory=directory)
+
+
+params = json.load(open("parameters.json"))
+set_seed = params["set_seed"]
+
+if set_seed:
+    glob_random_seed = params["seed"]
+    random.seed(glob_random_seed)
+else:
+    glob_random_seed = random.randint(0, 2147483647)
+    random.seed(glob_random_seed)
+
+radial_spatial_points(png_filename="", directory="mockaroo/mockaroo_comparison")
 
 # radial_spatial_points uses the JSON parameter file
 # radial_points_gen is the same function but with function parameters
