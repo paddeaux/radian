@@ -399,7 +399,11 @@ def radial_spatial_points(png_filename, directory):
 # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
-    dens = total_pts/source.area[0]
+
+    source_area = source.to_crs(epsg=8858)
+    print("Polygon area = " + str(round(source.area[0], 2)) + "m^2")
+    dens = total_pts/source_area.area[0]
+    print("Points density is " + str(dens) + " per m^2")
     if(dens > 1):
         print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
         print("Minimum points density is 1 point / m^2.")
@@ -620,12 +624,12 @@ def radial_spatial_points(png_filename, directory):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.5, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.1, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.1, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.1, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.1, color='black')
 
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
@@ -713,7 +717,7 @@ else:
     glob_random_seed = random.randint(0, 2147483647)
     random.seed(glob_random_seed)
 
-radial_spatial_points(png_filename="", directory="mockaroo/mockaroo_comparison")
+radial_spatial_points(png_filename="", directory="scenarios/us_fast_food")
 
 # radial_spatial_points uses the JSON parameter file
 # radial_points_gen is the same function but with function parameters

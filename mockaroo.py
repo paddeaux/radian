@@ -8,8 +8,8 @@ def mockaroo_geojson():
         source_gdf = gpd.GeoDataFrame(source, geometry=gpd.points_from_xy(source.lon, source.lat))
         source_gdf.to_file('mockaroo/mockaroo_points/mockaroo{}.geojson'.format(i), driver='GeoJSON')
 
-filename = "geojson_polygons/usa.geojson"
+filename = "geojson_polygons/maynooth.geojson"
 
 source = gpd.read_file(filename)
-source = source.to_crs(epsg=2163)
-print("Triangle area = " + str(round(source.area[0]/1000000, 2)) + "km^2")
+source = source.to_crs(epsg=8858)
+print("Kildare area = " + str(round(source.area[0]/1000000, 2)) + "km^2")
