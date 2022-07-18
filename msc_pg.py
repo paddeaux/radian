@@ -35,6 +35,9 @@ from shapely.geometry import Polygon, Point, shape, GeometryCollection, LineStri
 # 'area' = Variable-area generation (Smaller Voronoi towards the centroid, larger towards the borders)
 # 'rand' = Equal-area Voronoi generation centred around a random "moving centroid"
 
+global_accepted_points = 0
+global_rejected_points = 0
+
 
 def voronoi_gen(poly, vor_num, gen_type):
     poly = poly.to_crs(epsg=3857)
@@ -259,6 +262,9 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
     max_pt = Point(max_x, max_y)
     radius = max_pt.distance(poly.centroid)
 
+    global global_rejected_points
+    global global_accepted_points
+
     # Make list to hold all points and variables
     points = []
     rand_strings = []
@@ -319,6 +325,11 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
+                        global_accepted_points += 1
+                    else:
+                        global_rejected_points += 1
+                else:
+                    global_rejected_points += 1
                 if (current_pts >= section_pts):
                     section_num += 1
 
@@ -347,7 +358,6 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     print("i == section_num-1 is true")
                     temp = section_pts * i
                     section_pts = num_points - temp
-            print("Section pts is : " + str(section_pts))
             c_current = poly.centroid.buffer(section_size * (i+1))
             current_pts = 0
             while current_pts < section_pts:
@@ -356,6 +366,11 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
                     if (random_point.within(c_current)):
                         points.append(random_point)
                         current_pts += 1
+                        global_accepted_points += 1
+                    else:
+                        global_rejected_points += 1
+                else:
+                    global_rejected_points += 1
                 if (current_pts >= section_pts):
                     section_num += 1
             buffers.append(c_current)
@@ -374,6 +389,8 @@ def csv_att(filename, num_values):
 
 # Radial points generation using JSON file for parameters
 def radial_spatial_points(png_filename, directory):
+    global global_accepted_points
+    global global_rejected_points
 
     filename = params["filename"]
     save_name = os.path.basename(filename)
@@ -395,6 +412,8 @@ def radial_spatial_points(png_filename, directory):
     extra_var = params["extra_var"]
     extra_var_name = params["extra_var_name"]
     extra_var_file = params["extra_var_file"]
+
+    # Global diagnostic variables
 
 # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source = gpd.read_file(filename)
@@ -684,6 +703,12 @@ def radial_spatial_points(png_filename, directory):
         gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
         print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
 
+    global glob_ratio_list
+    print("Total accepted points: " + str(global_accepted_points))
+    print("Total rejected points: " + str(global_rejected_points))
+    print("Generation ratio: " + str(global_accepted_points / global_rejected_points))
+    glob_ratio_list.append(global_accepted_points / global_rejected_points)
+
 # remove from function to avoid scope errors
 def scenarios():
     gen_dir = "GenType_3"
@@ -706,7 +731,7 @@ def scenarios():
             for k in range(0,10):
                 radial_spatial_points(png_filename=f'{k}', directory=directory)
 
-
+glob_ratio_list = []
 params = json.load(open("parameters.json"))
 set_seed = params["set_seed"]
 
@@ -717,7 +742,18 @@ else:
     glob_random_seed = random.randint(0, 2147483647)
     random.seed(glob_random_seed)
 
-radial_spatial_points(png_filename="", directory="scenarios/us_fast_food")
+for run in range(0,1):
+    radial_spatial_points(png_filename=f"{run}", directory="scenarios/london_houses")
+
+diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
+diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
+
+f = open("scenarios/london_houses/rejection.txt", "w")
+f.write(diag_text)
+f.close()
+
+print("Generation seed: " + str(glob_random_seed))
+
 
 # radial_spatial_points uses the JSON parameter file
 # radial_points_gen is the same function but with function parameters
