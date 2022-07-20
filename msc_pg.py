@@ -643,12 +643,12 @@ def radial_spatial_points(png_filename, directory):
 
             # plot the Bulk points
             if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.1, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.1, color='black')
+                vor_pts.plot(ax=ax1, markersize=0.4, color='black')
+                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
 
             if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.1, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.1, color='black')
+                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
+                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
 
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
@@ -742,13 +742,13 @@ else:
     glob_random_seed = random.randint(0, 2147483647)
     random.seed(glob_random_seed)
 
-for run in range(0,1):
-    radial_spatial_points(png_filename=f"{run}", directory="scenarios/london_houses")
+for run in range(0,10):
+    radial_spatial_points(png_filename=f"{run}", directory="scenarios/GenType_2/OriginalCentroid/SecondaryOnly")
 
 diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
 diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
 
-f = open("scenarios/london_houses/rejection.txt", "w")
+f = open("scenarios/GenType_2/OriginalCentroid/SecondaryOnly/rejection.txt", "w")
 f.write(diag_text)
 f.close()
 
