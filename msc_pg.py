@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import contextily as cx
+import warnings
 
 # voroni generation packages
 from shapely.ops import cascaded_union
@@ -34,6 +35,10 @@ from shapely.geometry import Polygon, Point, shape, GeometryCollection, LineStri
 # 'eq' = Equal-area Voronoi generation centred around the original polygon centroid
 # 'area' = Variable-area generation (Smaller Voronoi towards the centroid, larger towards the borders)
 # 'rand' = Equal-area Voronoi generation centred around a random "moving centroid"
+
+# Suppress depreciation warnings
+warnings.filterwarnings('ignore')
+
 
 global_accepted_points = 0
 global_rejected_points = 0
@@ -77,8 +82,6 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     ####### This is the 'Polygon' object is not iterable error source ##########################
     #df = pd.DataFrame.from_dict(region_polys, orient='index', columns=['geometry'])
-
-    print("region_polys:\n" + str(region_polys))
 
     df = pd.DataFrame(list(region_polys.items()), columns=['index','geometry'])
     gdf_poly = gpd.GeoDataFrame(df, geometry='geometry')
@@ -353,9 +356,7 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
         section_pts = round(num_points / section_num)
         for i in range(0, section_num):
             if num_points % 5 != 0:
-                print("num_points % 5 is true")
                 if i == 4:
-                    print("i == section_num-1 is true")
                     temp = section_pts * i
                     section_pts = num_points - temp
             c_current = poly.centroid.buffer(section_size * (i+1))
@@ -416,13 +417,15 @@ def radial_spatial_points(png_filename, directory):
     # Global diagnostic variables
 
 # Reading in the GeoJSON file and setting the CRS to a meter-based projection
+    print("Reading {}...".format(filename))
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
+    print("\t{} loaded as source polygon.".format(filename))
 
     source_area = source.to_crs(epsg=8858)
-    print("Polygon area = " + str(round(source.area[0], 2)) + "m^2")
+    print("\tPolygon area = " + str(round(source.area[0], 2)) + "m^2")
     dens = total_pts/source_area.area[0]
-    print("Points density is " + str(dens) + " per m^2")
+    print("\tPoints density is " + str(dens) + " per m^2")
     if(dens > 1):
         print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
         print("Minimum points density is 1 point / m^2.")
@@ -430,13 +433,13 @@ def radial_spatial_points(png_filename, directory):
     min_x, min_y, max_x, max_y = source.total_bounds
 
     # Set the number used for Voronoi-based buffer generation to 256
-
+    print("*"*65)
     # This set of if-else statements determines how the Voronoi polygons are generated
     if(params['rand_centroid']):
         print("Generating Voronoi with Moving Centroid...")
         vor_polygons = voronoi_gen(source, 256, 'rand')
     else:
-        print("Generating Voronoi with Original...")
+        print("Generating Voronoi with Original Centroid...")
         vor_polygons = voronoi_gen(source, 256, 'eq')
 
     vor_polygons.crs = source.crs
@@ -450,14 +453,16 @@ def radial_spatial_points(png_filename, directory):
         # 2 for Variable-area Voronoi local generation with points determined by area
         # 3 for Variable-area Voronoi local generation with equal points in each Voronoi
 
-    print("Starting secondary generation...")
+    print("*"*65)
 
     # Set no local generation as the default
     if gen_type > 3:
         gen_type = 0
+        print("Skipping secondary generation.")
 
     # Local generation with approximately equal-area Voronoi polygons
     if gen_type == 1:
+        print("Starting secondary generation with equal-area Voronoi...")
         if vor_num > 256:
             vor_num = 256
             print("Max vor_num is 256!")
@@ -485,6 +490,7 @@ def radial_spatial_points(png_filename, directory):
 
     # Local generation with variable area Voronoi polygons with number of points based on area
     elif gen_type == 2:
+        print("Starting secondary generation with variable-area Voronoi and area-based points...")
         if vor_num > 128:
             vor_num = 128
             print("Max poly_area value is 128!")
@@ -495,6 +501,7 @@ def radial_spatial_points(png_filename, directory):
         local_points = round(total_pts * (1 - ratio))
         local_vor_points = round(local_points / vor_num)
 
+        print("\tGenerating secondary Voronoi regions...")
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
 
         # calculating the area of each polygon to determine the proportion of points in each
@@ -503,18 +510,19 @@ def radial_spatial_points(png_filename, directory):
 
         local_gdf = gpd.GeoDataFrame()
 
+        print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
             if i == vor_num-1:
                 current_local_points = int(local_points - len(local_gdf))
             else:
                 area_prop = local_vor_polygons['geometry'][i].area / local_area
                 current_local_points = int(local_points * area_prop)
-            print("current local points is :" + str(current_local_points))
             current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
     # Local generation with variable area Voronoi polygons with equal number of points in each
     elif gen_type == 3:
+        print("Starting secondary generation with variable-area Voronoi and equal points...")
         if vor_num > 128:
             vor_num = 128
             print("Max poly_area value is 128!")
@@ -525,14 +533,14 @@ def radial_spatial_points(png_filename, directory):
         local_points = round(total_pts * (1 - ratio))
         local_vor_points = round(local_points / vor_num)
 
-        print("Generating Voronoi with Variable Area...")
+        print("\tGenerating Secondary Voronoi regions...")
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
 
-        print("Voronoi complete.")
         # the polyogn crs is set as the main polygon crs
         local_vor_polygons.crs = source.crs
 
         local_gdf = gpd.GeoDataFrame()
+        print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
                 if i == vor_num-1:
@@ -541,24 +549,27 @@ def radial_spatial_points(png_filename, directory):
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
-    print("Secondary generation complete.")
+    print("\tSecondary generation complete.")
 
-    print("Combining Voronoi-based buffers...")
+    print("*"*65)
+
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
-    print("Buffers combined.")
 
-    print("Primary generation start...")
+
     bulk_points = round(total_pts * ratio)
     if(bulk_points > 0):
+        print("Beginning Primary generation...")
         # dissolve the vor_polygons by the class, determined by their distance to the centre of the polygon
         # combining successive Voronoi regions to allow points generating inside them
         vor_all = gpd.GeoDataFrame()
+        print("\tCreating Voronoi-based buffers...")
         for i in range(len(vor_union['geometry'])):
             current = gpd.GeoSeries(cascaded_union(list(vor_union['geometry'][0:i + 1])))
             vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
 
         # Generating points inside the merged Voronoi regions
+        print("\tBeginning Primary points generation...")
         vor_points = round(bulk_points / 5)
         vor_pts = gpd.GeoDataFrame()
         for i in range(len(vor_all[0])):
@@ -574,10 +585,15 @@ def radial_spatial_points(png_filename, directory):
 
             vor_pts = gpd.GeoDataFrame(vor_pts.append(gdf, ignore_index=True))
 
-    print("Primary generation complete.")
+        print("\tPrimary generation complete.")
+    else:
+        print("Skipping Primary generation.")
+
+    print("*"*65)
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
     if(to_sql or to_geojson or extra_var or plot):
+        print("Generating random variable data...")
         if(gen_type != 0 and bulk_points > 0):
             gdf_out = gpd.GeoDataFrame(vor_pts.append(local_gdf, ignore_index=True))
         elif(gen_type == 0):
@@ -600,6 +616,8 @@ def radial_spatial_points(png_filename, directory):
         start = pd.to_datetime(timestamp_range[0])
         end = pd.to_datetime(timestamp_range[1])
         gdf_out['rand_ts'] = random_dates(start, end, total_pts)
+        print("\tRandom variables generated.")
+        print("*" * 60)
 
     # Plotting of generated points and Voronoi regions
     if(plot or to_png):
@@ -680,33 +698,48 @@ def radial_spatial_points(png_filename, directory):
             plt.axis('equal')
 
         if(to_png):
+            print("Exporting to PNG...")
             plt.savefig(f"{directory}/PNG/{save_name.split('.')[0]}_points_{png_filename}.png")
-        if(plot):
-            plt.show()
+            print("*" * 60)
 
+        if(plot):
+            print("Plotting output...")
+            plt.show()
+            print("*" * 60)
 
     if(extra_var):
+        print("Generating extra attribute data...")
         if(isinstance(extra_var_file, str)):
             gdf_out[f'{extra_var_name}'] = csv_att(extra_var_file, total_pts)
+            print("Extra attribute generated.")
         elif(isinstance(extra_var_file, list)):
             for i in range(len(extra_var_name)):
                 gdf_out[f'{extra_var_name[i]}'] = csv_att(extra_var_file[i], total_pts)
+            print("Extra attributes generated.")
         else:
             print("Extra var input invalid")
 
+        print("*" * 60)
+
     # Exporting the generated points to an SQL file
     if(to_sql):
+        print("Exporting to SQL...")
         gdf_to_sql(f"{save_name.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name, png_filename, directory)
+        print("*" * 60)
+
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
+        print("Exporting to GeoJSON...")
         gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
         gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
-        print("Successfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
+        print("\tSuccessfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
+        print("*" * 60)
 
     global glob_ratio_list
-    print("Total accepted points: " + str(global_accepted_points))
-    print("Total rejected points: " + str(global_rejected_points))
-    print("Generation ratio: " + str(global_accepted_points / global_rejected_points))
+    print("Generation info:")
+    print("\tTotal accepted points: " + str(global_accepted_points))
+    print("\tTotal rejected points: " + str(global_rejected_points))
+    print("\tRejection ratio: " + str(global_accepted_points / global_rejected_points))
     glob_ratio_list.append(global_accepted_points / global_rejected_points)
 
 # remove from function to avoid scope errors
@@ -742,7 +775,7 @@ else:
     glob_random_seed = random.randint(0, 2147483647)
     random.seed(glob_random_seed)
 
-for run in range(0,10):
+for run in range(0,1):
     radial_spatial_points(png_filename=f"{run}", directory="scenarios/GenType_2/OriginalCentroid/SecondaryOnly")
 
 diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
@@ -752,7 +785,7 @@ f = open("scenarios/GenType_2/OriginalCentroid/SecondaryOnly/rejection.txt", "w"
 f.write(diag_text)
 f.close()
 
-print("Generation seed: " + str(glob_random_seed))
+print("\tGeneration seed: " + str(glob_random_seed))
 
 
 # radial_spatial_points uses the JSON parameter file
