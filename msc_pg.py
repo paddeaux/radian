@@ -4,6 +4,7 @@ Created on Tue Apr 19 15:54:29 2022
 
 @author: paddy
 """
+# Package imports
 import random
 from random import randint
 
@@ -38,7 +39,6 @@ from shapely.geometry import Polygon, Point, shape, GeometryCollection, LineStri
 
 # Suppress depreciation warnings
 warnings.filterwarnings('ignore')
-
 
 global_accepted_points = 0
 global_rejected_points = 0
@@ -125,34 +125,9 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
-    #fig, axs = plt.subplots(1,6, figsize=(16, 3), sharey=True)
-    #fig.tight_layout()
-
-    #poly.plot(ax=ax1, color='gray')
-    #poly.plot(ax=ax2, color='gray')
-
-
-    #gdf_poly.plot(ax=ax1, cmap='Blues', edgecolor='white')
-    #circ_gdf.plot(ax=ax1, color='None', edgecolor='black')
-
-
-    #circ_gdf.plot(ax=ax2, color='None', edgecolor='black')
-
-    #if gen_type == 'rand':
-    #    title += "Using moving centroid"
-    #else:
-    #    title += "Using original centroid"
-
-
-    #ax1.axis("off")
-    #ax2.axis("off")
-
-    #plt.axis('equal')
-    #plt.show()
-
     return gdf_poly
 
-# This fucntion takes in a Shapely Polygon, number of points, number of clusters, and a generation type, and returns
+# This function takes in a Shapely Polygon, number of points, number of clusters, and a generation type, and returns
 # a GeoDataFrame of Points, representing centroids produced by a Kmeans clustering of uniformly random points generated
 # inside of the polygon. The centroids will either be generated using uniform generation, with points distributed
 # uniformly in the polygon, or with points concentrated towards the polygon centroid.
@@ -458,7 +433,6 @@ def radial_spatial_points(png_filename, directory):
     # Set no local generation as the default
     if gen_type > 3:
         gen_type = 0
-        print("Skipping secondary generation.")
 
     # Local generation with approximately equal-area Voronoi polygons
     if gen_type == 1:
@@ -487,6 +461,7 @@ def radial_spatial_points(png_filename, directory):
 
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True ))
+        print("\tSecondary generation complete.")
 
     # Local generation with variable area Voronoi polygons with number of points based on area
     elif gen_type == 2:
@@ -519,6 +494,7 @@ def radial_spatial_points(png_filename, directory):
                 current_local_points = int(local_points * area_prop)
             current = random_point_gen(local_vor_polygons['geometry'][i], current_local_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
+        print("\tSecondary generation complete.")
 
     # Local generation with variable area Voronoi polygons with equal number of points in each
     elif gen_type == 3:
@@ -549,7 +525,10 @@ def radial_spatial_points(png_filename, directory):
             current = random_point_gen(local_vor_polygons['geometry'][i], local_vor_points, 'cent')
             local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
 
-    print("\tSecondary generation complete.")
+        print("\tSecondary generation complete.")
+
+    else:
+        print("Skipping secondary generation.")
 
     print("*"*65)
 
