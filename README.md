@@ -1,5 +1,10 @@
 # MSc Data Science & Analytics Project - Random Spatial Data Generation with Python
-This repo holds everything for my MSc in Data Science project. The project involves the creation of a Python tool to generate realistic random spatial data for use in assessment
+This Git Repository contains the source code, documentation, and resulting scenario files for my thesis as part of my MSc in Data Science 
+and Analytics with Manyooth University. The aim of this project is to create a Python-based piece of software that will allow for simple 
+generation of realistic random spatial data for use in classroom assessments as part of the postgraduate module CS621 - Spatial Databases.
+
+The **RADIAN** (RAnDom spatIal dAta geNerator) is the result of this project, and allows users to produce realistic-looking, randomly generated 
+datasets through implementation of a Voronoi-based buffering system, along with a number of user specified parameters.
 
 ## Running the Software
 Running the tool will require installation of the necessary third-party packages including geopandas. The `msc_pg.py` file must be run in the same directory as the `parameters.json` file. The description and expected values for the parameters are as follows:
@@ -107,13 +112,5 @@ The exporting to SQL requires a great deal more thought than the exporting to ge
 ### 3) Plotting
 The tool offers the ability to display the outputted points on a Matplotlib map to demonstrate both the final set of points as well as the intermediate steps and buffers/polygons generated to reach that last dataframe.
 
-
-## Planned Functionality:
-
-* Generation of realistic random spatial data:
-  * Data points to be distributed in a random fashion that behaves like real-world spatial data points (patterns, clustering, distance to roads/borders/etc.)
-  * Points will have randomly generated realistic meta-data, such as names and various attributes, depending on the type of points being generated
-* Exporting of data to a GeoJSON format
-* Exporting of data to a PostgreSQL format
 
 
