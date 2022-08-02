@@ -703,12 +703,16 @@ def radial_spatial_points(png_filename, directory):
     # Exporting the generated points to an SQL file
     if(to_sql):
         print("Exporting to SQL...")
+        if not os.path.exists(f"{directory}/SQL"):
+            os.makedirs(f"{directory}/SQL")
         gdf_to_sql(f"{save_name.split('.')[0]}", gdf_out, total_pts, extra_var, extra_var_name, png_filename, directory)
         print("*" * 60)
 
     # Exporting the generated points to a GeoJSON file
     if(to_geojson):
         print("Exporting to GeoJSON...")
+        if not os.path.exists(f"{directory}/GeoJSON"):
+            os.makedirs(f"{directory}/SQL")
         gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
         gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
         print("\tSuccessfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
@@ -746,6 +750,7 @@ def scenarios():
 glob_ratio_list = []
 params = json.load(open("parameters.json"))
 set_seed = params["set_seed"]
+directory = os.path.dirname(params["filename"])
 
 if set_seed:
     glob_random_seed = params["seed"]
@@ -755,12 +760,12 @@ else:
     random.seed(glob_random_seed)
 
 for run in range(0,1):
-    radial_spatial_points(png_filename=f"{run}", directory="scenarios/GenType_2/OriginalCentroid/SecondaryOnly")
+    radial_spatial_points(png_filename=f"{run}", directory=directory)
 
 diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
 diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
 
-f = open("scenarios/GenType_2/OriginalCentroid/SecondaryOnly/rejection.txt", "w")
+f = open("rejection.txt", "w")
 f.write(diag_text)
 f.close()
 
