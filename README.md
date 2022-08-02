@@ -6,6 +6,8 @@ generation of realistic random spatial data for use in classroom assessments as 
 The **RADIAN** (RAnDom spatIal dAta geNerator) is the result of this project, and allows users to produce realistic-looking, randomly generated 
 datasets through implementation of a Voronoi-based buffering system, along with a number of user specified parameters.
 
+A short demonstration video is available via the following link: https://maynoothuniversity-my.sharepoint.com/:v:/g/personal/patrick_gorry_2015_mumail_ie/ETvmj7NewVpNqyeULOhxhP4BOkQLp1oirA-WBtysssEpCw?e=3du5cF
+
 ## Running the Software
 Running the tool will require installation of the necessary third-party packages including geopandas. The `msc_pg.py` file must be run in the same directory as the `parameters.json` file. The description and expected values for the parameters are as follows:
 * `filename` : This will be the name/directory of the .geojson polygon boundary within which we wish to generate points
