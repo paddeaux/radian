@@ -603,7 +603,7 @@ def radial_spatial_points(png_filename, directory):
         end = pd.to_datetime(timestamp_range[1])
         gdf_out['rand_ts'] = random_dates(start, end, total_pts)
 
-        gdf_out.rename(columns={"rand_int": f"{rand_var_names[0]}", "rand_str": f"{rand_var_names[1]}", "rand_ts": f"{rand_var_names[2]}"})
+        gdf_out = gdf_out.rename(columns={"rand_int": f"{rand_var_names[0]}", "rand_str": f"{rand_var_names[1]}", "rand_ts": f"{rand_var_names[2]}"})
         print("\tRandom variables generated.")
         print("*" * 60)
 
@@ -723,8 +723,8 @@ def radial_spatial_points(png_filename, directory):
         if not os.path.exists(f"{directory}/GeoJSON"):
             os.makedirs(f"{directory}/SQL")
         gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
-        gdf_out.to_file(f"{directory}/GeoJSON/{save_name.split('.')[0]}_points_{png_filename}.geojson", driver='GeoJSON')
-        print("\tSuccessfully created GeoJSON file {}_points_4326.geojson with {} points".format(filename.split('.')[0], total_pts))
+        gdf_out.to_file(f"{directory}/GeoJSON/{table_name}.geojson", driver='GeoJSON')
+        print("\tSuccessfully created GeoJSON file {}.geojson with {} points".format(table_name, total_pts))
         print("*" * 60)
 
     global glob_ratio_list
