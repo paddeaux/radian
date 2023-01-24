@@ -325,7 +325,7 @@ def random_point_gen(poly, num_points, gen_type, return_buffers=False):
         # Points list is converted to a GeoDataFrame and outputted
         df = pd.DataFrame(points, columns=['geometry'])
         gdf = gpd.GeoDataFrame(df, geometry='geometry')
-        gdf.crs = poly._crs
+        # gdf.crs = poly.crs
         return gdf
 
     # Original centroid generation
