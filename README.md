@@ -1,4 +1,24 @@
-# MSc Data Science & Analytics Project - Random Spatial Data Generation with Python
+# MSc Data Science & Analytics Project - Random Spatial Data Generation with Python (READ ME WIP)
+
+## Ongoing Changes:
+
+The following are pieces of feedback from continued use of the tool
+* **Data Variables**
+  * allow all columns to be optional – but also allow for multiple columns of the same type (for example two timestamp columns)
+  * Allow extraction from a file but without weights
+  * Potentially allow for some ‘patterns’ to drive generation of randomised strings.
+* **Output**:
+  * Allow export of the Voroni polygons to GeoJSON and/or PostgreSQL Dump file?
+  * More detailed analysis on the critical point for RADIAN – at what scale does the generation start to “not be realistic”
+* **Generation Parameters**:
+  * Change the way parameters/seeding is dealt with by the tool - make easier reproducability of outputted dataset:
+    * **Example:** The generation seed is produced by whatever unique combination of the parameter inputs is used. For example, a seed may start with:
+    {total_pts}{gen_type}{ratio}..... = 500|2|50.....
+  * GUI for setting the generation parameters would be nice.
+* **General**
+  * Change how/where outputs are stored (for Git pushing purposes)
+
+
 This Git Repository contains the source code, documentation, and resulting scenario files for my thesis as part of my MSc in Data Science 
 and Analytics with Manyooth University. The aim of this project is to create a Python-based piece of software that will allow for simple 
 generation of realistic random spatial data for use in classroom assessments as part of the postgraduate module CS621 - Spatial Databases.
@@ -113,6 +133,3 @@ The exporting to SQL requires a great deal more thought than the exporting to ge
 
 ### 3) Plotting
 The tool offers the ability to display the outputted points on a Matplotlib map to demonstrate both the final set of points as well as the intermediate steps and buffers/polygons generated to reach that last dataframe.
-
-
-
