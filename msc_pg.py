@@ -163,7 +163,15 @@ def wrapper_function():
     # This function takes in a GeoDataFrame of randomly generated points (along with additional random variables)
     # and produces a SQL file that will allow a PostgreSQL table to be created containing the data
 
-    def gdf_to_sql(table_name, gdf, num_rows, rand_var_names, extra_var, extra_var_name, png_filename, directory):
+    def get_var_type(var_type):
+        if var_type == 'int':
+            return "INTEGER"
+        elif var_type == 'str':
+            return "VARCHAR"
+        elif var_type == 'ts':
+            return "TIMESTAMP"
+
+    def gdf_to_sql(table_name, gdf, num_rows, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, png_filename, directory):
         # Opens up an SQL file based on the table name, writes to the file and closes it
         sqlFile = open(f'{directory}/SQL/{table_name}.sql', "w")
         sqlFile.write("")
@@ -179,10 +187,18 @@ def wrapper_function():
 
         sqlFile.write('CREATE TABLE {} ( \n'.format(table_name))
         sqlFile.write('\tpkid SERIAL PRIMARY KEY NOT NULL, \n')
-        sqlFile.write("\tthegeom GEOMETRY DEFAULT ST_GeomFromText('POINT(0,51)', 4326), \n")
-        sqlFile.write('\t{} INTEGER, \n'.format(rand_var_names[0]))
-        sqlFile.write('\t{} VARCHAR, \n'.format(rand_var_names[1]))
-        sqlFile.write('\t{} TIMESTAMP'.format(rand_var_names[2]))
+        sqlFile.write("\tthegeom GEOMETRY DEFAULT ST_GeomFromText('POINT(0,51)', 4326)")
+
+        if default_vars:
+            sqlFile.write(',\n')
+            for count, type in enumerate(rand_var_types):
+                sqlFile.write(f'\t{rand_var_names[count]} {get_var_type(rand_var_types[count])}')
+                if count < len(rand_var_types)-1:
+                    sqlFile.write(', \n')
+            #sqlFile.write(',\n\t{} {}, \n'.format(rand_var_names[0], get_var_type(rand_var_types[0])))
+            #sqlFile.write('\t{} {}, \n'.format(rand_var_names[1], get_var_type(rand_var_types[1])))
+            #sqlFile.write('\t{} {}'.format(rand_var_names[2], get_var_type(rand_var_types[2])))
+
         if extra_var:
             for var_name in extra_var_name:
                 create_query = ',\n\t{} '.format(var_name)
@@ -205,33 +221,99 @@ def wrapper_function():
             lat = row[1][0].y
             lon = row[1][0].x
             # Pull the randomly generated strings and ints from the dataframe
-            rand_str = row[1][1]
-            rand_int = row[1][2]
-            rand_ts = row[1][3]
-            if(not extra_var):
-                # Insert statement for each point along with the included variables
-                query = "INSERT into {} (thegeom, {}, {}, {}) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326), {}, '{}', '{}'); \r".format(
-                    table_name,rand_var_names[0], rand_var_names[1],rand_var_names[2], lon, lat, rand_int, rand_str, rand_ts)
+            if default_vars:
+                if (not extra_var):
+                    var_index = 1
+                    query = f"INSERT into {table_name} (thegeom, "
+                    for count, type in enumerate(rand_var_names):
+                        query += f"{rand_var_names[count]}"
+                        if count < len(rand_var_names)-1:
+                            query += ", "
+                    query += f") VALUES (ST_SetSRID(ST_MakePoint({lon},{lat}), 4326), "
+                    for count, type in enumerate(rand_var_types):
+                        if type != "int":
+                            query += "'"
+                        query += f'{row[1][count+1]}'
+                        if type != "int":
+                            query += "'"
+                        if count < len(rand_var_names)-1:
+                            query += ", "
+                    query += '); \r'
+
+                
+                # indexing for extra variables begins at position 1
+                #rand_str = row[1][1]
+                #rand_int = row[1][2]
+                #rand_ts = row[1][3]
+                #if(not extra_var):
+                    # Insert statement for each point along with the included variables
+                #    query = f"INSERT into {table_name} (thegeom, "
+                #    query += f"{rand_var_names[0]}, {rand_var_names[1]}, {rand_var_names[2]}"
+                #    query += f") VALUES (ST_SetSRID(ST_MakePoint({lon},{lat}),4326), "
+                #    query += f"{rand_int}, '{rand_str}', '{rand_ts}'); \r"
+                
+
+                else:
+                    full_var_names = rand_var_names + extra_var_name
+                    full_var_types = rand_var_types + extra_var_types
+
+                    extra_values = []
+                    for i in range(len(extra_var_name)):
+                        extra_values.append(row[1][len(rand_var_names)+i])
+
+                    var_index = 1
+                    query = f"INSERT into {table_name} (thegeom, "
+                    for count, type in enumerate(full_var_names):
+                        query += f"{full_var_names[count]}"
+                        if count < len(full_var_names)-1:
+                            query += ", "
+                    query += f") VALUES (ST_SetSRID(ST_MakePoint({lon},{lat}), 4326), "
+                    for count, type in enumerate(full_var_types):
+                        if type != "int":
+                            query += "'"
+                        
+                        if type == "str":
+                            query += "{}".format(row[1][count+1].replace("'", "''")) 
+                        else:
+                            query += "{}".format(row[1][count+1])
+                        
+                        if type != "int":
+                            query += "'"
+                        if count < len(full_var_names)-1:
+                            query += ", "
+                    query += '); \r'
+
             else:
-                extra_values = []
-                for i in range(len(extra_var_name)):
-                    extra_values.append(row[1][4+i])
+                if(not extra_var):
+                    # Insert statement for each point along with the included variables
+                    query = "INSERT into {} (thegeom) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326)); \r".format(
+                        table_name, lon, lat)
+                else:
+                    extra_values = []
+                    for i in range(len(extra_var_name)):
+                        extra_values.append(row[1][i+1])
 
-                query = 'INSERT into {} (thegeom, {}, {}, {}'.format(table_name, rand_var_names[0], rand_var_names[1],rand_var_names[2])
-                for var_name in extra_var_name:
-                    query += ', {}'.format(var_name)
-
-                query += " ) VALUES (ST_SetSRID(ST_MakePoint({},{}),4326), {}, '{}', '{}'".format(
-                    lon, lat, rand_int, rand_str, rand_ts)
-
-                for value in extra_values:
-                    if isinstance(value, str):
-                        temp = value.replace("'", "''")
-                        query += ", '{}'".format(temp)
-                    elif isinstance(value, int):
-                        query += ', {}'.format(value)
-
-                query += '); \r'
+                    var_index = 1
+                    query = f"INSERT into {table_name} (thegeom, "
+                    for count, type in enumerate(extra_var_name):
+                        query += f"{extra_var_name[count]}"
+                        if count < len(extra_var_name)-1:
+                            query += ", "
+                    query += f") VALUES (ST_SetSRID(ST_MakePoint({lon},{lat}), 4326), "
+                    for count, type in enumerate(extra_var_types):
+                        if type != "int":
+                            query += "'"
+                        
+                        if type == "str":
+                            query += "{}".format(row[1][count+1].replace("'", "''")) 
+                        else:
+                            query += "{}".format(row[1][count+1])
+                        
+                        if type != "int":
+                            query += "'"
+                        if count < len(extra_var_name)-1:
+                            query += ", "
+                    query += '); \r'
 
             # Write query string to SQL file
             sqlFile.write(query)
@@ -370,8 +452,27 @@ def wrapper_function():
 
     def csv_att(filename, num_values):
         source = pd.read_csv(filename)
-        name_dist = list(random.choices(source['string'], weights = source['weight'], k = num_values))
-        return name_dist
+        if source.shape[1] < 2:
+            return list(random.choices(source['string'], k = num_values))
+        return list(random.choices(source['string'], weights = source['weight'], k = num_values))
+
+    def generate_vars(gdf, rand_var_types, rand_var_names, rand_var_params):
+        for count, type in enumerate(rand_var_types):
+            if type == 'int':
+                gdf[f'{rand_var_names[count]}'] = [randint(rand_var_params[count][0], rand_var_params[count][1]) for i in range(len(gdf.index))]
+            elif type == 'str':
+                gdf[f'{rand_var_names[count]}'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(rand_var_params[count])) for i in range(len(gdf.index))]
+            elif type == 'ts':
+                start = pd.to_datetime(rand_var_params[count][0])
+                end = pd.to_datetime(rand_var_params[count][1])
+                ts_start = start.value//10**9
+                ts_end = end.value//10**9
+                gdf[f'{rand_var_names[count]}'] = list(pd.to_datetime(np.random.randint(ts_start, ts_end, len(gdf.index)), unit='s'))
+            else:
+                return
+
+        print("Random variables generated...")
+        return gdf
 
     # Radial points generation using JSON file for parameters
     def radial_spatial_points(png_filename, directory):
@@ -386,7 +487,10 @@ def wrapper_function():
         ratio = (params["ratio"] / 100)
         vor_num = params["vor_num"]
         table_name = params["table_name"]
+        default_vars = params["default_vars"]
+        rand_var_types = params["rand_var_types"]
         rand_var_names = params["rand_var_names"]
+        rand_var_params = params["rand_var_params"]
         rand_centroid = params["rand_centroid"]
         int_range = params["int_range"]
         string_len = params["string_len"]
@@ -394,11 +498,13 @@ def wrapper_function():
         to_sql = params["to_sql"]
         to_geojson = params["to_geojson"]
         to_png = params["to_png"]
+        vor_to_geojson = params["vor_to_geojson"]
         png_filename = params["png_filename"]
         plot = params["plot"]
         basemap = params["basemap"]
         breakdown = params["breakdown"]
         extra_var = params["extra_var"]
+        extra_var_types = params["extra_var_types"]
         extra_var_name = params["extra_var_name"]
         extra_var_file = params["extra_var_file"]
 
@@ -596,22 +702,27 @@ def wrapper_function():
             gdf_out = gdf_out.set_crs(epsg=3857)
             gdf_out = gdf_out.to_crs(epsg=4326)
 
-            # Here we can set the extra random attribute variables
-            gdf_out['rand_str'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(string_len)) for i in range(total_pts)]
-            gdf_out['rand_int'] = [randint(int_range[0], int_range[1]) for i in range(total_pts)]
+            if default_vars:
+                gdf_out = generate_vars(gdf_out, rand_var_types, rand_var_names, rand_var_params)
 
-            def random_dates(start, end, n):
-                ts_start = start.value//10**9
-                ts_end = end.value//10**9
-                return list(pd.to_datetime(np.random.randint(ts_start, ts_end, n), unit='s'))
+                """
+                # Here we can set the extra random attribute variables
+                gdf_out['rand_str'] = [''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(string_len)) for i in range(total_pts)]
+                gdf_out['rand_int'] = [randint(int_range[0], int_range[1]) for i in range(total_pts)]
 
-            start = pd.to_datetime(timestamp_range[0])
-            end = pd.to_datetime(timestamp_range[1])
-            gdf_out['rand_ts'] = random_dates(start, end, total_pts)
+                def random_dates(start, end, n):
+                    ts_start = start.value//10**9
+                    ts_end = end.value//10**9
+                    return list(pd.to_datetime(np.random.randint(ts_start, ts_end, n), unit='s'))
 
-            gdf_out = gdf_out.rename(columns={"rand_int": f"{rand_var_names[0]}", "rand_str": f"{rand_var_names[1]}", "rand_ts": f"{rand_var_names[2]}"})
-            print("\tRandom variables generated.")
-            print("*" * 60)
+                start = pd.to_datetime(timestamp_range[0])
+                end = pd.to_datetime(timestamp_range[1])
+                gdf_out['rand_ts'] = random_dates(start, end, total_pts)
+
+                gdf_out = gdf_out.rename(columns={"rand_int": f"{rand_var_names[0]}", "rand_str": f"{rand_var_names[1]}", "rand_ts": f"{rand_var_names[2]}"})
+                print("\tDefault random variables generated.")
+                print("*" * 60)
+                """
 
         # Plotting of generated points and Voronoi regions
         if(plot or to_png):
@@ -720,7 +831,7 @@ def wrapper_function():
             print("Exporting to SQL...")
             if not os.path.exists(f"{directory}/SQL"):
                 os.makedirs(f"{directory}/SQL")
-            gdf_to_sql(table_name, gdf_out, total_pts, rand_var_names, extra_var, extra_var_name, png_filename, directory)
+            gdf_to_sql(table_name, gdf_out, total_pts, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, png_filename, directory)
             print("*" * 60)
 
         # Exporting the generated points to a GeoJSON file
@@ -732,6 +843,17 @@ def wrapper_function():
             gdf_out.to_file(f"{directory}/GeoJSON/{table_name}.geojson", driver='GeoJSON')
             print("\tSuccessfully created GeoJSON file {}.geojson with {} points".format(table_name, total_pts))
             print("*" * 60)
+
+        if(gen_type > 0 and vor_to_geojson):
+            print("Exporting Voronoi polygons to GeoJSON...")
+            if not os.path.exists(f"{directory}/GeoJSON"):
+                os.makedirs(f"{directory}/SQL")
+            #local_vor_polygons.insert(0, 'PKID', range(0, len(local_vor_polygons)))
+            local_vor_polygons['class'] = local_vor_polygons['class'].astype(int)
+            local_vor_polygons.to_file(f"{directory}/GeoJSON/{table_name}_voronoi_polygons.geojson", driver='GeoJSON')
+            print("\tSuccessfully created GeoJSON file {}_voronoi_polygons.geojson".format(table_name))
+            print("*" * 60)
+
 
         #global glob_ratio_list
         print("Generation info:")
