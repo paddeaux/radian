@@ -171,6 +171,39 @@ def wrapper_function():
         elif var_type == 'ts':
             return "TIMESTAMP"
 
+    def gdf_poly_to_sql(table_name, gdf, directory):
+        # initializes an SQL output file
+        sqlFile = open(f'{directory}/SQL/{table_name}_voronoi.sql','w')
+        sqlFile.write("")
+        sqlFile.close()
+
+        sqlFile = open(f'{directory}/SQL/{table_name}_voronoi.sql', 'a')
+        sqlFile.write('-- Voronoi polygon regions exported to SQL from the RADIAN Spatal Data Generator\n\n')
+        
+        sqlFile.write('DROP TABLE IF EXISTS {}; \n\n'.format(table_name))
+        sqlFile.write('CREATE TABLE {} ( \n'.format(table_name))
+        sqlFile.write('\tpkid SERIAL PRIMARY KEY NOT NULL, \n')
+        sqlFile.write("\tthegeom GEOMETRY DEFAULT ST_GeomFromText('POINT(0,51)', 4326), \n")
+        sqlFile.write("\tdist_to_centre NUMERIC,\n")
+        sqlFile.write("\tpoly_class INTEGER\n")
+        sqlFile.write('\n); \n\n')
+        sqlFile.write('-- Spatial index is now created\n\n')
+        # Creation of Spatial Index for the SQL file
+        sqlFile.write('CREATE INDEX {}_spatial_index ON {} USING gist (thegeom); \n'.format(table_name, table_name))
+
+        gdf['geometry'] = gdf.geometry.to_wkt()
+
+        for row in gdf.itertuples():
+            poly_coords = row[2]
+            query = f"INSERT into {table_name} (thegeom, "
+            query += f"{gdf.columns[2]}, poly_class"
+            query += f") VALUES (ST_SetSRID(ST_PolygonFromText('{poly_coords}'),3857), "
+            query += f"{row[1]}, {row[3]}); \r"
+            sqlFile.write(query)
+
+        # Write query string to SQL file
+        print("Successfully export Voronoi polygons to SQL format.")
+
     def gdf_to_sql(table_name, gdf, num_rows, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, png_filename, directory):
         # Opens up an SQL file based on the table name, writes to the file and closes it
         sqlFile = open(f'{directory}/SQL/{table_name}.sql', "w")
@@ -847,12 +880,19 @@ def wrapper_function():
         if(gen_type > 0 and vor_to_geojson):
             print("Exporting Voronoi polygons to GeoJSON...")
             if not os.path.exists(f"{directory}/GeoJSON"):
-                os.makedirs(f"{directory}/SQL")
+                os.makedirs(f"{directory}/GeoJSON")
             #local_vor_polygons.insert(0, 'PKID', range(0, len(local_vor_polygons)))
             local_vor_polygons['class'] = local_vor_polygons['class'].astype(int)
             local_vor_polygons.to_file(f"{directory}/GeoJSON/{table_name}_voronoi_polygons.geojson", driver='GeoJSON')
             print("\tSuccessfully created GeoJSON file {}_voronoi_polygons.geojson".format(table_name))
             print("*" * 60)
+            print(local_vor_polygons)
+
+            print("Exporting Voronoi Polygons to SQL")
+            if not os.path.exists(f"{directory}/SQL"):
+                os.makedirs(f"{directory}/SQL")
+
+            gdf_poly_to_sql("voronoi_poly_test", local_vor_polygons, directory)
 
 
         #global glob_ratio_list
