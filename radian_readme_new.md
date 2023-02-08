@@ -14,7 +14,7 @@ RADIAN is a tool built in Python and as such can be simply run from the command 
 
 RADIAN (depending on the user parameters) will plot the resulting data via `matplotlib`, save the same plot as a .PNG image, and/or export the resulting points in GeoJSON and/or SQL format. Corresponding folders are produced in the same directory as the source polygon containing these exported files.
 
-![Sample RADIAN outputs viewed in QGIS](sample_outputs_qgis.png "RADIAN Output")
+![Sample RADIAN outputs viewed in QGIS](sample_output_qgis.png "RADIAN Output")
 
 ## __Development History__
 
