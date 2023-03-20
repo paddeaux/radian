@@ -1,7 +1,7 @@
 {
 	"filename":"scenarios/test_scenario/kildare.geojson",
-	"total_pts":500,
-	"gen_type":2,
+	"total_pts":6000,
+	"gen_type":1,
 	"ratio":50,
 	"vor_num": 16,
 	"table_name":"radian_testing",
@@ -19,7 +19,7 @@
 	"vor_to_geojson":true,
 	"vor_to_sql":false,
 	"png_filename":"",
-	"plot":true,
+	"plot":false,
 	"breakdown":true,
 	"basemap": true,
 	"extra_var":true,

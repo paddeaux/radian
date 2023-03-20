@@ -7,6 +7,7 @@ Created on Tue Apr 19 15:54:29 2022
 # Package imports
 import random
 from random import randint
+import time
 
 import os
 import json
@@ -936,6 +937,8 @@ def radial_spatial_points(png_filename, directory):
     glob_ratio_list.append(global_accepted_points / global_rejected_points)
 
 
+start_time = time.time()
+
 glob_ratio_list = []
 
 default_run = False
@@ -967,3 +970,6 @@ f.close()
 
 print("\tGeneration seed: " + str(glob_random_seed))
 
+end_time = time.time()
+
+print("Generation time taken = ", (end_time-start_time))
