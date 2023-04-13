@@ -1,2 +1,2 @@
-Rejection ratio list: [0.14521452145214522]
-Mean ratio: 0.14521452145214522
+Rejection ratio list: [0.16750418760469013]
+Mean ratio: 0.16750418760469013

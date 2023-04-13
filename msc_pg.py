@@ -129,6 +129,17 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     vor_union = gdf_poly.dissolve(by='class', as_index=False)
 
+
+    #fig, ax = plt.subplots(1,3,figsize=(16,8))
+    #gdf_poly.plot(ax=ax[1], edgecolor='white', facecolor='grey')
+    #gdf_poly.plot(ax=ax[2], cmap='Blues')
+
+    #vor_centroids.plot(ax=ax[1], color='green', markersize=0.8)
+    #for x in ax:
+    #    poly.plot(ax=x, facecolor='none', edgecolor='red')
+    #    vor_centroids.plot(ax=x, color='green', markersize=0.8)
+    #plt.show()
+
     return gdf_poly
 
 # This function takes in a Shapely Polygon, number of points, number of clusters, and a generation type, and returns
@@ -157,6 +168,9 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     df = pd.DataFrame(centroids, columns=['x', 'y'])
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y))
     gdf.crs = source.crs
+
+    fig, ax = plt.subplots(figsize=(10,5))
+
     return gdf
 
 # This function takes in a GeoDataFrame of randomly generated points (along with additional random variables)
@@ -721,7 +735,6 @@ def radial_spatial_points(png_filename, directory):
     # Bulk generation in the source polygon
     vor_union = vor_polygons.dissolve(by='class', as_index=False)
 
-
     bulk_points = round(total_pts * ratio)
     if(bulk_points > 0):
         print("Beginning Primary generation...")
@@ -732,6 +745,8 @@ def radial_spatial_points(png_filename, directory):
         for i in range(len(vor_union['geometry'])):
             current = gpd.GeoSeries(cascaded_union(list(vor_union['geometry'][0:i + 1])))
             vor_all = gpd.GeoDataFrame(vor_all.append(current, ignore_index=True))
+
+        
 
         # Generating points inside the merged Voronoi regions
         print("\tBeginning Primary points generation...")
