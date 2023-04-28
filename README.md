@@ -1,4 +1,4 @@
-# MSc Data Science & Analytics Project - Random Spatial Data Generation with Python (READ ME WIP)
+# **RADIAN**: Synthetic Spatial Data in Python
 
 ## Ongoing Changes:
 
@@ -18,17 +18,13 @@ The following are pieces of feedback from continued use of the tool
 * **General**
   * Change how/where outputs are stored (for Git pushing purposes)
 
+## **Overview**
 
-This Git Repository contains the source code, documentation, and resulting scenario files for my thesis as part of my MSc in Data Science 
-and Analytics with Manyooth University. The aim of this project is to create a Python-based piece of software that will allow for simple 
-generation of realistic random spatial data for use in classroom assessments as part of the postgraduate module CS621 - Spatial Databases.
-
-The **RADIAN** (RAnDom spatIal dAta geNerator) is the result of this project, and allows users to produce realistic-looking, randomly generated 
-datasets through implementation of a Voronoi-based buffering system, along with a number of user specified parameters.
+**RADIAN** (**RA**n**D**om spat**I**al d**A**ta ge**N**erator) is a *Python-based* tool to generate synthetic geographic datasets for classroom and teaching environments. RADIAN utilizes a unique *voronoi-based* buffering system in order to replicate the *radial* nature of many real-world spatial datasets. Given a polygon in `.geojson` format and the relevent `.json` parameter file, RADIAN can export synthetic datasets in `.geojson` and `postgreSQL` formats.
 
 A short demonstration video is available via the following link: https://maynoothuniversity-my.sharepoint.com/:v:/g/personal/patrick_gorry_2015_mumail_ie/ETvmj7NewVpNqyeULOhxhP4BOkQLp1oirA-WBtysssEpCw?e=3du5cF
 
-## Running the Software
+## **Running the Software**
 Running the tool will require installation of the necessary third-party packages including geopandas. The `msc_pg.py` file must be run in the same directory as the `parameters.json` file. The description and expected values for the parameters are as follows:
 * `filename` : This will be the name/directory of the .geojson polygon boundary within which we wish to generate points
 * `total_pts` : The total number of points to be generated within the polygon, approx. 1000-3000 recommended
