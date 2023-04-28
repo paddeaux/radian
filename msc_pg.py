@@ -847,14 +847,17 @@ def radial_spatial_points(png_filename, directory):
             # centroid_point.plot(ax=ax1, color='Red')
 
             # plot the Bulk points
-            if(bulk_points > 0):
-                vor_pts.plot(ax=ax1, markersize=0.4, color='black')
-                vor_pts.plot(ax=ax3, markersize=0.4, color='black')
+            print_points = True
 
-            if gen_type != 0:
-                local_gdf.plot(ax=ax2, markersize=0.4, color='white')
-                local_gdf.plot(ax=ax3, markersize=0.4, color='black')
+            if print_points:
+                if(bulk_points > 0):
+                    vor_pts.plot(ax=ax1, markersize=0.4, color='black')
+                    vor_pts.plot(ax=ax3, markersize=0.4, color='black')
 
+                if gen_type != 0:
+                    local_gdf.plot(ax=ax2, markersize=0.4, color='white')
+                    local_gdf.plot(ax=ax3, markersize=0.4, color='black')
+            
             #fig.suptitle(title)  # Plot title text
             #ax1.set_title("Primary Generation",y=0.05, pad=-14)
             ax1.axis("off")
