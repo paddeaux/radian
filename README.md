@@ -20,36 +20,14 @@ The following are pieces of feedback from continued use of the tool
 
 ## **Overview**
 
-**RADIAN** (**RA**n**D**om spat**I**al d**A**ta ge**N**erator) is a *Python-based* tool to generate synthetic geographic datasets for classroom and teaching environments. RADIAN utilizes a unique *voronoi-based* buffering system in order to replicate the *radial* nature of many real-world spatial datasets. Given a polygon in `.geojson` format and the relevent `.json` parameter file, RADIAN can export synthetic datasets in `.geojson` and `postgreSQL` formats.
+**RADIAN** (**RA**n**D**om spat**I**al d**A**ta ge**N**erator) is a *Python-based* tool to generate synthetic geographic datasets for classroom and teaching environments. RADIAN utilizes a unique *voronoi-based* buffering system in order to replicate the *radial* nature of many real-world spatial datasets. Given a polygon in `GeoJSON` format and the relevent `JSON` parameter file, RADIAN can export synthetic datasets in `GeoJSON` and `postgreSQL` formats.
 
-A short demonstration video is available via the following link: https://maynoothuniversity-my.sharepoint.com/:v:/g/personal/patrick_gorry_2015_mumail_ie/ETvmj7NewVpNqyeULOhxhP4BOkQLp1oirA-WBtysssEpCw?e=3du5cF
+A short demonstration video is available [here](https://maynoothuniversity-my.sharepoint.com/:v:/g/personal/patrick_gorry_2015_mumail_ie/ETvmj7NewVpNqyeULOhxhP4BOkQLp1oirA-WBtysssEpCw?e=3du5cF)
 
 ## **Running the Software**
-Running the tool will require installation of the necessary third-party packages including geopandas. The `msc_pg.py` file must be run in the same directory as the `parameters.json` file. The description and expected values for the parameters are as follows:
-* `filename` : This will be the name/directory of the .geojson polygon boundary within which we wish to generate points
-* `total_pts` : The total number of points to be generated within the polygon, approx. 1000-3000 recommended
-* `gen_type` : Controls the type of local-level generation to be used. Expecting a number between 0 and 3:
-    * 0 for just primary generation
-    * 1 for local generation within voronoi regions of approximately equal area, each with an equal proportion of points
-    * 2 for local generation within voronoi regions of variable area, each allocated a proporation relative to their size, larger polygons with more points than smaller ones
-    * 3 for local generation within voronoi regions of variable area, each with an equal proportion of points
-* `ratio` : Value between 0 and 1 that indicates the ratio of macro to micro points. 1 would result in 100% macro points, 0.5 would result in 50% macro and 50% micro etc.
-* `vor_num` : Number of local regions to be generated for local point generation
-* `rand_centroid` : True or false, indicates whether a moving random centroid is used in the primary generation or if the original polygon centroid is used.
-* `int_range` : A list with length two, indicating the range of the random integers to be generated and assigned to each point, e.g. [1,100]
-* `string_len` : Integer value that specifies the length of the random string to be generated and assigned to each point.
-* `timestamp_range` : A list with length two, indicating the range within the random timestamp for each point is to be generated, e.g. ["2022-01-01 00:00:00", "2022-12-31 23:59:59"]
-* `to_sql` : True/False. Indicates if final dataset will be outputted to an SQL file
-* `to_geojson` : True/False. Indicates if final dataset will be outputted to a GeoJSON file
-* `to_png` : True/False. Indicates if plots of generated points will be exported in PNG format
-* `png_filename` : Specifies filename of above PNG file
-* `plot` : True/False, Indicates if the final dataset and boundary will be plotted after generation using matplotlib
-* `breakdown` : True/False. Indicates if the above plot will include a breakdown including 4 sepearate plots showing the macro, micro and final generation seperately.
-* `extra_var` : True/False. Indicates if extra point columns from inputted CSV files will be included in dataset.
-* `extra_var_name` : List of strings indicating the variable name(s) for the extra CSV columns to be added.
-* `extra_var_file` : List of strings indicating the file names of the CSVs used for the extra variables.
-* `set_seed` : True/False, indicates a seed will be used for the generation, allows for reproducibility. 
-* `seed` : Integer seed value for random generation.
+Running the tool will require installation of the necessary third-party packages including geopandas. The `radian.py` file must be run in the same directory as the `parameters.json` file. A detailed description of the running parameters and their expected values/limits is available [here](https://github.com/paddeaux/msc_rng/wiki/Parameters)
+
+
 
 ### Note on the CSV files
 The CSV files for adding additional variables to the data should be simply formatted into two columns, one with a list of potential values, and a second column with weights indicating the frequency at which each value should occur in the final dataset.
