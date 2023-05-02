@@ -169,8 +169,6 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y))
     gdf.crs = source.crs
 
-    fig, ax = plt.subplots(figsize=(10,5))
-
     return gdf
 
 # This function takes in a GeoDataFrame of randomly generated points (along with additional random variables)
@@ -217,7 +215,7 @@ def gdf_poly_to_sql(table_name, gdf, directory):
     # Write query string to SQL file
     print("Successfully export Voronoi polygons to SQL format.")
 
-def gdf_to_sql(table_name, gdf, num_rows, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, png_filename, directory):
+def gdf_to_sql(table_name, gdf, num_rows, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, directory):
     # Opens up an SQL file based on the table name, writes to the file and closes it
     sqlFile = open(f'{directory}/SQL/{table_name}.sql', "w")
     sqlFile.write("")
@@ -541,7 +539,6 @@ def get_default_parameters():
         "to_png": True,
         "vor_to_geojson": True,
         "vor_to_sql": True,
-        "png_filename":"output_default.png",
         "plot": True,
         "breakdown": False,
         "basemap": True,
@@ -555,11 +552,51 @@ def get_default_parameters():
 
     return default_param_dict
 
+def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_points, secondary_points, basemap):
+    fig, axs = plt.subplots(2,2, figsize=(10,8))
+    fig.tight_layout()
+    fig.suptitle("RADIAN Synthetic Spatial Data Generator")
+
+    subtitles = ["Primary Generation", "Secondary Generation", "Full Generation", "Full Generation (basemap)"]
+
+    # Printing source polygon border and setting subplot titles
+    for i, ax in enumerate(axs.flatten()):
+        ax.axis("off")
+        ax.set_title(subtitles[i],y=0.05, pad=-14)
+        polygon.plot(ax=ax, edgecolor='black', facecolor='none')
+
+    # Primary generation
+    buffers.plot(ax=axs[0,0], cmap='Blues', edgecolor='white')
+    centroid.plot(ax=axs[0,0], color='red', markersize=3)
+    primary_points.plot(ax=axs[0,0], color='green', markersize=1.5)
+
+    # Secondary generation
+    voronoi.plot(ax=axs[0,1], cmap='Blues', edgecolor='white')
+    #vor_centroid.plot(ax=axs[0,1], color='red', markersize=3)
+    secondary_points.plot(ax=axs[0,1], color='green', markersize=1.5)
+
+    # Full generation
+    buffers.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
+    voronoi.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
+
+    for ax in axs.flatten()[2:3]:
+        primary_points.plot(ax=ax, color='green', markersize=1.5)
+        secondary_points.plot(ax=ax, color='green', markersize=1.5)
+
+    # Basemap
+    cx.add_basemap(axs[1,1], attribution=False)
+    plt.show()
+
 # Radial points generation using JSON file for parameters
-def radial_spatial_points(png_filename, directory):
+def radian():
     global global_accepted_points
     global global_rejected_points
     global global_ratio_list
+
+    start_time = time.time()
+    params = json.load(open("parameters.json"))
+    set_seed = params["set_seed"]
+    directory = os.path.dirname(params["filename"])
 
     filename = params["filename"]
     save_name = os.path.basename(filename)
@@ -577,7 +614,6 @@ def radial_spatial_points(png_filename, directory):
     to_geojson = params["to_geojson"]
     to_png = params["to_png"]
     vor_to_geojson = params["vor_to_geojson"]
-    png_filename = params["png_filename"]
     plot = params["plot"]
     basemap = params["basemap"]
     breakdown = params["breakdown"]
@@ -586,9 +622,18 @@ def radial_spatial_points(png_filename, directory):
     extra_var_name = params["extra_var_name"]
     extra_var_file = params["extra_var_file"]
 
+    global glob_random_seed
+
+    if set_seed:
+        glob_random_seed = params["seed"]
+        random.seed(glob_random_seed)
+    else:
+        glob_random_seed = random.randint(0, 2147483647)
+        random.seed(glob_random_seed)
+
     # Global diagnostic variables
 
-# Reading in the GeoJSON file and setting the CRS to a meter-based projection
+    # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     print("Reading {}...".format(filename))
     source = gpd.read_file(filename)
     source = source.to_crs(epsg=3857)
@@ -884,11 +929,6 @@ def radial_spatial_points(png_filename, directory):
             ax.axis("off")
             plt.axis('equal')
 
-        if(to_png):
-            print("Exporting to PNG...")
-            plt.savefig(f"{directory}/PNG/{save_name.split('.')[0]}_points_{png_filename}.png")
-            print("*" * 60)
-
         if(plot):
             print("Plotting output...")
             plt.show()
@@ -913,7 +953,7 @@ def radial_spatial_points(png_filename, directory):
         print("Exporting to SQL...")
         if not os.path.exists(f"{directory}/SQL"):
             os.makedirs(f"{directory}/SQL")
-        gdf_to_sql(table_name, gdf_out, total_pts, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, png_filename, directory)
+        gdf_to_sql(table_name, gdf_out, total_pts, default_vars, rand_var_types, rand_var_names, rand_var_params, extra_var, extra_var_types, extra_var_name, directory)
         print("*" * 60)
 
     # Exporting the generated points to a GeoJSON file
@@ -951,40 +991,17 @@ def radial_spatial_points(png_filename, directory):
     print("\tRejection ratio: " + str(global_accepted_points / global_rejected_points))
     glob_ratio_list.append(global_accepted_points / global_rejected_points)
 
+    diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
+    diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
 
-start_time = time.time()
+    print("\tGeneration seed: " + str(glob_random_seed))
 
-glob_ratio_list = []
+    end_time = time.time()
 
-default_run = False
+    print("Generation time taken = ", (end_time-start_time))
 
-if default_run:
-    params = get_default_parameters()
-else:
-    params = json.load(open("parameters.json"))
+    if(plot):
+        plot_output(source, source.centroid, vor_union, local_vor_polygons, False, vor_pts, local_gdf, False)
 
-set_seed = params["set_seed"]
-directory = os.path.dirname(params["filename"])
+radian()
 
-if set_seed:
-    glob_random_seed = params["seed"]
-    random.seed(glob_random_seed)
-else:
-    glob_random_seed = random.randint(0, 2147483647)
-    random.seed(glob_random_seed)
-
-for run in range(0,1):
-    radial_spatial_points(png_filename=f"{run}", directory=directory)
-
-diag_text = str("Rejection ratio list: " + str(glob_ratio_list) + "\n")
-diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
-
-f = open("rejection.txt", "w")
-f.write(diag_text)
-f.close()
-
-print("\tGeneration seed: " + str(glob_random_seed))
-
-end_time = time.time()
-
-print("Generation time taken = ", (end_time-start_time))
