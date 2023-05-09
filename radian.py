@@ -555,7 +555,7 @@ def get_default_parameters():
 def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_points, secondary_points, basemap):
     fig, axs = plt.subplots(2,2, figsize=(10,8))
     fig.tight_layout()
-    fig.suptitle("RADIAN Synthetic Spatial Data Generator")
+    fig.suptitle(f"RADIAN Synthetic Spatial Data Generator\n{len(primary_points)} primary points, {len(secondary_points)} secondary points")
 
     subtitles = ["Primary Generation", "Secondary Generation", "Full Generation", "Full Generation (basemap)"]
 
@@ -579,7 +579,7 @@ def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_point
     buffers.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
     voronoi.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
 
-    for ax in axs.flatten()[2:3]:
+    for ax in axs.flatten()[2:4]:
         primary_points.plot(ax=ax, color='green', markersize=1.5)
         secondary_points.plot(ax=ax, color='green', markersize=1.5)
 

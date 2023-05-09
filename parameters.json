@@ -2,7 +2,7 @@
 	"filename":"scenarios/glasgow/glasgow.geojson",
 	"set_seed": false,
 	"seed" : 1878019349,
-	"total_pts":400,
+	"total_pts":1000,
 	"gen_type":2,
 	"rand_centroid":false,
 	"ratio":50,
