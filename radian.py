@@ -61,19 +61,19 @@ def poly_bb_ratio(poly):
 
 ########## NEW POINT GENERATION FUNCTIONS ##########
 # 180,000 points in 10 seconds!!!!!
-def points_uniform(poly, num_points):
+def points_uniform(poly, num_points, epsg):
     global global_rejected_points
     global global_accepted_points
     min_x, min_y, max_x, max_y = poly.bounds
     poly_ratio = poly_bb_ratio(poly)
-    poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
+    poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry', crs=epsg)
 
     points = []
     # Generates points repeatedly with a uniform generation within the bounds of the polygon
     while len(points) < round(num_points * poly_ratio):
         points.append(Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)]))
 
-    gdf = gpd.GeoDataFrame(pd.DataFrame(points, columns=['geometry']), geometry='geometry')
+    gdf = gpd.GeoDataFrame(pd.DataFrame(points, columns=['geometry']), geometry='geometry', crs=epsg)
     gdf = gdf.sjoin(poly_gdf, predicate='within')
 
     return gdf.iloc[0:num_points]
@@ -155,7 +155,6 @@ def points_centre(poly, num_points):
     section_num = 5
     section_size = (radius * 0.8) / section_num
     section_pts = round(num_points / section_num)
-    print("num points to be generated:", num_points)
     points_gdf = gpd.GeoDataFrame([])
     for i in range(0, section_num):
         if num_points % 5 != 0:
@@ -178,7 +177,6 @@ def points_centre(poly, num_points):
     #df = pd.DataFrame(points, columns=['geometry'])
     #gdf = gpd.GeoDataFrame(df, geometry='geometry')
 
-    print("Number of points generated:", len(points_gdf))
     return points_gdf.iloc[0:num_points]
 
 ########## OLD POINT GENERATION FUNCTIONS ##########
@@ -683,7 +681,6 @@ def primary_generation(source, total_pts, ratio, rand_centroid, epsg):
         vor_points = round(bulk_points / 5)
         primary_pts = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=epsg)
         for i in range(len(vor_all)):
-            print("Primary section", i)
             if bulk_points % 5 != 0:
                 if i == len(vor_all[0])-1:
                     temp = vor_points * i
@@ -746,7 +743,6 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num, epsg):
             current = points_centre(local_vor_polygons['geometry'][i], local_vor_points)
             #local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
             local_gdf = pd.concat([local_gdf, current], ignore_index=True)
-        print("\tSecondary generation complete.")
 
     # Local generation with variable area Voronoi polygons with number of points based on area
     elif gen_type == 2:
@@ -819,6 +815,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num, epsg):
     #local_gdf = gpd.GeoDataFrame(pd.DataFrame(loca, columns=['geometry']), geometry='geometry', crs=source.crs)
 
     return local_gdf, local_vor_polygons
+
 
 # Radial points generation using JSON file for parameters
 def radian():
@@ -983,5 +980,41 @@ def radian():
     if(plot):
         plot_output(source_gdf, primary_vor_polygons, local_vor_polygons, False, primary_points, secondary_points, False)
 
-radian()
+# Radial points generation using JSON file for parameters
+def radian_uniform():
 
+    start_time = time.time()
+    params = json.load(open("parameters.json"))
+    set_seed = params["set_seed"]
+
+    filename = params["filename"]
+    epsg = params['epsg']
+    total_pts = params["total_pts"]
+
+    # Global diagnostic variables
+
+    # Reading in the GeoJSON file and setting the CRS to a meter-based projection
+    print("Reading {}...".format(filename))
+    source_gdf = gpd.read_file(filename)
+    source_gdf = source_gdf.to_crs(epsg=3857)
+    print("\t{} loaded as source polygon.".format(filename))
+
+    ########## POINTS GENERATION ##########
+
+    source = source_gdf.loc[0, 'geometry']
+    gdf_out = points_uniform(source, total_pts, 3857)
+    
+        ########## EXPORTING OF DATA ##########
+
+    # Set exported CRS
+    gdf_out = gdf_out.to_crs(epsg)
+    
+    end_time = time.time()
+
+    print("Generation time taken = ", (end_time-start_time))
+
+    ########### DATA PREVIEW ##########
+
+    print(f"Total points: {len(gdf_out)}\n", gdf_out.head())
+
+radian_uniform()
