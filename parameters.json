@@ -1,6 +1,7 @@
 {
 	"filename":"scenarios/glasgow/glasgow.geojson",
 	"set_seed": false,
+	"epsg":4326,
 	"seed" : 1878019349,
 	"total_pts":300,
 	"gen_type":1,
@@ -10,18 +11,18 @@
 	"table_name":"osm_comparison_radian",
 	"to_sql":false,
 	"to_geojson":false,
-	"to_png":false,
 	"vor_to_geojson":false,
 	"vor_to_sql":false,
-	"plot":true,
-	"breakdown":false,
-	"basemap": false,
-	"default_vars" : true,
+	"plot":false,
+	"preview":true,
+	"random_vars" : true,
 	"rand_var_types" : ["ts", "int", "str"],
 	"rand_var_names" : ["opening_time", "phone_number", "area_code"],
 	"rand_var_params" : [["2022-01-01 11:00:00", "2022-01-01 15:00:00"],[1000000000,9999999999], 10],
 	"extra_var":true,
 	"extra_var_types" : ["str"],
 	"extra_var_name":["name"],
-	"extra_var_file":["restaurant.csv"]
+	"extra_var_file":["restaurant.csv"],
+	"extra_var_params":[["str","var_name", "restaurant.csv"]],
+	"extra_var_dict": [{"type":"str", "name": "var_name", "source": "restaurant.csv"}]
 }
