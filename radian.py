@@ -51,23 +51,23 @@ warnings.filterwarnings('ignore')
 
 # testing the bounding box spatial join method for points generation
 
-def poly_bb_ratio(polygon):
-    minx, miny, maxx, maxy = polygon.bounds
-    bb = gpd.GeoSeries(box(minx, miny, maxx, maxy, ccw=True))
-    ratio = float(1/(polygon.area/bb.area))
-    if ratio < 1.5:
-        return 1.5
+def poly_bb_ratio(poly):
+    min_x, min_y, max_x, max_y = poly.bounds
+    bb = gpd.GeoSeries(box(min_x, min_y, max_x, max_y, ccw=True))
+    ratio = float(1/(poly.area/bb.area))
+    if ratio < 2:
+        return 2
     return ratio
 
-
-
+########## NEW POINT GENERATION FUNCTIONS ##########
+# 180,000 points in 10 seconds!!!!!
 def points_uniform(poly, num_points):
     global global_rejected_points
     global global_accepted_points
     min_x, min_y, max_x, max_y = poly.bounds
     poly_ratio = poly_bb_ratio(poly)
     poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
-    print("Points to be generated:", num_points * poly_ratio)
+
     points = []
     # Generates points repeatedly with a uniform generation within the bounds of the polygon
     while len(points) < round(num_points * poly_ratio):
@@ -89,7 +89,7 @@ def points_moving_centre(poly, num_points):
     radius = max_pt.distance(poly.centroid)
 
     #poly_ratio = poly_bb_ratio(poly)
-    #poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
+    poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
 
     points = []
     # Moving centroid is generated in an eliptical region around the original centroid
@@ -129,7 +129,8 @@ def points_moving_centre(poly, num_points):
 
         gdf = gpd.GeoDataFrame(pd.DataFrame(current_list, columns=['geometry']), geometry='geometry')
         gdf = gdf.sjoin(buffer_gdf, predicate='within')
-        gdf = gdf.sjoin(poly, predicate='within')
+        gdf = gdf.drop(['index_right'], axis=1)
+        gdf = gdf.sjoin(poly_gdf, predicate='within')
 
         points_gdf = pd.concat([points_gdf, gdf],ignore_index=True)
 
@@ -142,8 +143,9 @@ def points_moving_centre(poly, num_points):
 def points_centre(poly, num_points):
     global global_rejected_points
     global global_accepted_points
-    
     min_x, min_y, max_x, max_y = poly.bounds
+    poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
+
     cx, cy = poly.centroid.x, poly.centroid.y
     max_pt = Point(max_x, max_y)
     radius = max_pt.distance(poly.centroid)
@@ -161,14 +163,16 @@ def points_centre(poly, num_points):
                 temp = section_pts * i
                 section_pts = num_points - temp
         c_current = poly.centroid.buffer(section_size * (i+1))
-
+        min_x, min_y, max_x, max_y = c_current.bounds
         buffer_gdf = gpd.GeoDataFrame(pd.DataFrame([c_current], columns=['geometry']), geometry='geometry')
         current_list = []
         while len(current_list) < section_pts*3:
-            current_list.append(Point([random.uniform(min_x + random.uniform(0,100), max_x - random.uniform(0,100)), random.uniform(min_y + random.uniform(0,100), max_y - random.uniform(0,100))]))
+            current_list.append(Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)]))
             
         gdf = gpd.GeoDataFrame(pd.DataFrame(current_list, columns=['geometry']), geometry='geometry')
         gdf = gdf.sjoin(buffer_gdf, predicate='within')
+        gdf = gdf.drop(['index_right'], axis=1)
+        gdf = gdf.sjoin(poly_gdf, predicate='within')
         points_gdf = pd.concat([points_gdf, gdf], ignore_index=True)
 
     #df = pd.DataFrame(points, columns=['geometry'])
@@ -177,8 +181,8 @@ def points_centre(poly, num_points):
     print("Number of points generated:", len(points_gdf))
     return points_gdf.iloc[0:num_points]
 
-########## POINT GENERATION FUNCTIONS ##########
-
+########## OLD POINT GENERATION FUNCTIONS ##########
+# 180,000 points in 501 seconds
 def points_uniform_old(poly, num_points):
     global global_rejected_points
     global global_accepted_points
@@ -306,9 +310,11 @@ def points_centre_old(poly, num_points):
 def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     # Points are generated randomly in the polygon
     if(eq_area == 0): # Uniform distribution
-        source = points_uniform(poly['geometry'][0], num_points)  
+        #source = points_uniform(poly['geometry'][0], num_points)  
+        source = points_uniform(poly, num_points)  
     else: # Centroid-focused distribution
-        source = points_centre(poly['geometry'][0], num_points)
+        #source = points_centre(poly['geometry'][0], num_points)
+        source = points_centre(poly, num_points)
 
     #source = source.set_crs(epsg=3857)
 
@@ -323,13 +329,13 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     # The cluster centres are stored as centroids, and this list is put into a GeoDataFrame and returned
     centroids = kmeans.cluster_centers_
     df = pd.DataFrame(centroids, columns=['x', 'y'])
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y), crs=poly.crs)
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y))
 
     return gdf
 
 
 def voronoi_gen(poly, vor_num, gen_type):
-    poly = poly.to_crs(epsg=3857)
+    #poly = poly.to_crs(epsg=3857)
     # Voronoi centroids are generated based on the specified generation type
     if(gen_type == 'eq'): # Equal-area uniformly distributed Voronoi regions
         vor_centroids = kmeans_centroids(poly, 500, vor_num, 0)
@@ -337,7 +343,7 @@ def voronoi_gen(poly, vor_num, gen_type):
         vor_centroids = kmeans_centroids(poly, 500, vor_num, 1)
     elif(gen_type == 'rand'): # Equal-area uniformly distributed Voronoi regions (with moving centroid)
         # Calculate moving centroid in an eliptical region around the original centroid
-        boundary_poly = poly['geometry'][0]
+        boundary_poly = poly#['geometry'][0]
         cx, cy = boundary_poly.centroid.x, boundary_poly.centroid.y
         min_x, min_y, max_x, max_y = boundary_poly.bounds
 
@@ -349,15 +355,16 @@ def voronoi_gen(poly, vor_num, gen_type):
         # Generation of the moving centroid
         centroid_point = Point([random.uniform(cx - range_x, cx + range_x), random.uniform(cy - range_y, cy + range_y)])
         gdf_centroid = gpd.GeoSeries(centroid_point)
-        gdf_centroid.crs = poly.crs
+        #gdf_centroid.crs = poly.crs
 
         vor_centroids = kmeans_centroids(poly, 500, vor_num, 0)
     # Setting crs to meter based projection
-    gdf_proj = vor_centroids.set_crs(poly.crs)
+    #gdf_proj = vor_centroids.set_crs(poly.crs)
 
     # Convert the boundary geometry into a union of the polygon
-    boundary_shape = cascaded_union(poly.geometry)
-    coords = points_to_coords(gdf_proj.geometry)
+    boundary_shape = cascaded_union(poly)#.geometry)
+    #coords = points_to_coords(gdf_proj.geometry)
+    coords = points_to_coords(vor_centroids.geometry)
 
     # Calculating the voronoi regions
     region_polys, region_pts = voronoi_regions_from_coords(coords, boundary_shape)
@@ -365,7 +372,7 @@ def voronoi_gen(poly, vor_num, gen_type):
 
     df = pd.DataFrame(list(region_polys.items()), columns=['index','geometry'])
     gdf_poly = gpd.GeoDataFrame(df, geometry='geometry')
-    gdf_poly.crs = poly.crs
+    #gdf_poly.crs = poly.crs
 
     # Calculating distance of Voronoi polygons to the centroid (moving or original)
     gdf_poly['dist_to_centre'] = " "
@@ -619,7 +626,7 @@ def generate_vars(gdf, rand_var_types, rand_var_names, rand_var_params):
 
 # Functions relating to ouput of radian
 
-def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_points, secondary_points, basemap):
+def plot_output(polygon, buffers, voronoi, vor_centroid, primary_points, secondary_points, basemap):
     fig, axs = plt.subplots(2,2, figsize=(10,8))
     fig.tight_layout()
     fig.suptitle(f"RADIAN Synthetic Spatial Data Generator\n{len(primary_points)} primary points, {len(secondary_points)} secondary points")
@@ -634,7 +641,7 @@ def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_point
 
     # Primary generation
     buffers.plot(ax=axs[0,0], cmap='Blues', edgecolor='white')
-    centroid.plot(ax=axs[0,0], color='red', markersize=3)
+    polygon.centroid.plot(ax=axs[0,0], color='red', markersize=3)
     primary_points.plot(ax=axs[0,0], color='green', markersize=1.5)
 
     # Secondary generation
@@ -654,7 +661,7 @@ def plot_output(polygon, centroid, buffers, voronoi, vor_centroid, primary_point
     cx.add_basemap(axs[1,1], attribution=False)
     plt.show()
 
-def primary_generation(source, total_pts, ratio, rand_centroid):
+def primary_generation(source, total_pts, ratio, rand_centroid, epsg):
     
     if(rand_centroid):
         vor_polygons = voronoi_gen(source, 256, 'rand')
@@ -671,11 +678,12 @@ def primary_generation(source, total_pts, ratio, rand_centroid):
             current = cascaded_union(list(vor_union['geometry'][0:i + 1]))
             vor_all.append(current)
 
-        vor_all = gpd.GeoDataFrame(pd.DataFrame(vor_all, columns=['geometry']), geometry='geometry', crs=source.crs)
+        vor_all = gpd.GeoDataFrame(pd.DataFrame(vor_all, columns=['geometry']), geometry='geometry', crs=epsg)
 
         vor_points = round(bulk_points / 5)
-        primary_pts = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
+        primary_pts = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=epsg)
         for i in range(len(vor_all)):
+            print("Primary section", i)
             if bulk_points % 5 != 0:
                 if i == len(vor_all[0])-1:
                     temp = vor_points * i
@@ -694,7 +702,7 @@ def primary_generation(source, total_pts, ratio, rand_centroid):
 
     return vor_pts, vor_union
 
-def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
+def secondary_generation(source, total_pts, ratio, gen_type, vor_num, epsg):
     #### Local level generation ###
 
     # gen_type:
@@ -725,10 +733,10 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         local_vor_polygons = voronoi_gen(source, vor_num, 'eq')
 
         # the polyogn crs is set as the main polygon crs
-        local_vor_polygons.crs = source.crs
+        #local_vor_polygons.crs = source.crs
 
         #local_gdf = gpd.GeoDataFrame()
-        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=epsg)
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
                 if i == vor_num-1:
@@ -760,7 +768,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         local_area_union = local_vor_polygons.dissolve()
         local_area = local_area_union.area
 
-        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=epsg)
 
         print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
@@ -790,9 +798,9 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         local_vor_polygons = voronoi_gen(source, vor_num, 'area')
 
         # the polyogn crs is set as the main polygon crs
-        local_vor_polygons.crs = source.crs
+        #local_vor_polygons.crs = source.crs
 
-        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=epsg)
         print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
@@ -862,34 +870,33 @@ def radian():
 
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     print("Reading {}...".format(filename))
-    source = gpd.read_file(filename)
-    source = source.to_crs(epsg=3857)
+    source_gdf = gpd.read_file(filename)
+    source_gdf = source_gdf.to_crs(epsg=3857)
     print("\t{} loaded as source polygon.".format(filename))
 
-    source_area = source.to_crs(epsg=8858)
-    print("\tPolygon area = " + str(round(source.area[0], 2)) + "m^2")
+    source_area = source_gdf.to_crs(epsg=8858)
+    print("\tPolygon area = " + str(round(source_gdf.area[0], 2)) + "m^2")
     dens = total_pts/source_area.area[0]
     print("\tPoints density is " + str(dens) + " per m^2")
     if(dens > 1):
         print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
         print("Minimum points density is 1 point / m^2.")
         return
-    min_x, min_y, max_x, max_y = source.total_bounds
 
     ########## POINTS GENERATION ##########
 
+    source = source_gdf.loc[0, 'geometry']
     print("Beginning Primary generation...")
-    primary_points, primary_vor_polygons = primary_generation(source, total_pts, ratio, rand_centroid)
+    primary_points, primary_vor_polygons = primary_generation(source, total_pts, ratio, rand_centroid, 3857)
     print("\tPrimary generation complete.")
 
     print("Beginning Secondary generation...")
-    secondary_points, local_vor_polygons = secondary_generation(source, total_pts, ratio, gen_type, vor_num)
+    secondary_points, local_vor_polygons = secondary_generation(source, total_pts, ratio, gen_type, vor_num, 3857)
     print("\tSecondary generation complete.")
     
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
 
-    gdf_out = gpd.GeoDataFrame(primary_points.append(secondary_points, ignore_index=True))
-    gdf_out = gdf_out.set_crs(epsg=4326)
+    gdf_out = gpd.GeoDataFrame(primary_points.append(secondary_points, ignore_index=True), crs=3857)
 
     ########## ADDITIONAL METADATA GENERATION ##########
 
@@ -908,7 +915,8 @@ def radian():
     ########## EXPORTING OF DATA ##########
 
     # Set exported CRS
-    gdf_out = gdf_out.to_crs(epsg=epsg)
+    gdf_out = gdf_out.to_crs(epsg)
+    print("gdf.crs = ", gdf_out.crs)
 
     # Exporting data to SQL dump file
     if(to_sql):
@@ -973,7 +981,7 @@ def radian():
     ########## PLOTTING DATA ##########
 
     if(plot):
-        plot_output(source, source.centroid, primary_vor_polygons, local_vor_polygons, False, primary_points, secondary_points, False)
+        plot_output(source_gdf, primary_vor_polygons, local_vor_polygons, False, primary_points, secondary_points, False)
 
 radian()
 
