@@ -49,9 +49,137 @@ glob_ratio_list = []
 # Suppress depreciation warnings
 warnings.filterwarnings('ignore')
 
-# functions relating to points generation
+# testing the bounding box spatial join method for points generation
+
+def poly_bb_ratio(polygon):
+    minx, miny, maxx, maxy = polygon.bounds
+    bb = gpd.GeoSeries(box(minx, miny, maxx, maxy, ccw=True))
+    ratio = float(1/(polygon.area/bb.area))
+    if ratio < 1.5:
+        return 1.5
+    return ratio
+
+
 
 def points_uniform(poly, num_points):
+    global global_rejected_points
+    global global_accepted_points
+    min_x, min_y, max_x, max_y = poly.bounds
+    poly_ratio = poly_bb_ratio(poly)
+    poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
+    print("Points to be generated:", num_points * poly_ratio)
+    points = []
+    # Generates points repeatedly with a uniform generation within the bounds of the polygon
+    while len(points) < round(num_points * poly_ratio):
+        points.append(Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)]))
+
+    gdf = gpd.GeoDataFrame(pd.DataFrame(points, columns=['geometry']), geometry='geometry')
+    gdf = gdf.sjoin(poly_gdf, predicate='within')
+
+    return gdf.iloc[0:num_points]
+    
+    #return gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
+
+def points_moving_centre(poly, num_points):
+    global global_rejected_points
+    global global_accepted_points
+    min_x, min_y, max_x, max_y = poly.bounds
+    cx, cy = poly.centroid.x, poly.centroid.y
+    max_pt = Point(max_x, max_y)
+    radius = max_pt.distance(poly.centroid)
+
+    #poly_ratio = poly_bb_ratio(poly)
+    #poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
+
+    points = []
+    # Moving centroid is generated in an eliptical region around the original centroid
+    range_x = (max_x - min_x) / 4
+    range_y = (max_y - min_y) / 16
+    centroid_point = Point([random.uniform(cx - range_x, cx + range_x), random.uniform(cy - range_y, cy + range_y)])
+
+    # Number of sections is set as well as the number of points assigned to each section
+    section_num = 5
+    section_size = (radius * 0.8) / section_num
+    section_pts = round(num_points / section_num)
+
+    # Values used to shift point locations to account for the moving centroid generation
+    cent_diff_x = (cx - centroid_point.x) / section_num
+    cent_diff_y = (cy - centroid_point.y) / section_num
+
+    points_gdf = gpd.GeoDataFrame([])
+    # Points are generated section by section
+    for i in range(0, section_num):
+        if num_points % 5 != 0:
+            if i == 4:
+                temp = section_pts * i
+                section_pts = num_points - temp
+        # Current circular buffer is created within which to generate points
+        point_current = Point([centroid_point.x + (cent_diff_x * i), centroid_point.y + (cent_diff_y * i)])
+        c_current = point_current.buffer(section_size * (i + 1))
+        min_x, min_y, max_x, max_y = c_current.bounds
+
+        buffer_gdf = gpd.GeoDataFrame(pd.DataFrame([c_current], columns=['geometry']), geometry='geometry')
+        buffer_ratio = poly_bb_ratio(c_current)
+
+        # This while loop controls the generation of points in the current section
+        current_list = []
+        while len(current_list) < section_pts * buffer_ratio:
+            # here we generate a point using a uniform distribution to set the possible x and y ranges
+            current_list.append(Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)]))
+
+        gdf = gpd.GeoDataFrame(pd.DataFrame(current_list, columns=['geometry']), geometry='geometry')
+        gdf = gdf.sjoin(buffer_gdf, predicate='within')
+        gdf = gdf.sjoin(poly, predicate='within')
+
+        points_gdf = pd.concat([points_gdf, gdf],ignore_index=True)
+
+
+    # Points list is converted to a GeoDataFrame and outputted
+    #df = pd.DataFrame(points, columns=['geometry'])
+    #gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    return points_gdf.iloc[0:num_points]
+
+def points_centre(poly, num_points):
+    global global_rejected_points
+    global global_accepted_points
+    
+    min_x, min_y, max_x, max_y = poly.bounds
+    cx, cy = poly.centroid.x, poly.centroid.y
+    max_pt = Point(max_x, max_y)
+    radius = max_pt.distance(poly.centroid)
+
+    points = []
+    
+    section_num = 5
+    section_size = (radius * 0.8) / section_num
+    section_pts = round(num_points / section_num)
+    print("num points to be generated:", num_points)
+    points_gdf = gpd.GeoDataFrame([])
+    for i in range(0, section_num):
+        if num_points % 5 != 0:
+            if i == 4:
+                temp = section_pts * i
+                section_pts = num_points - temp
+        c_current = poly.centroid.buffer(section_size * (i+1))
+
+        buffer_gdf = gpd.GeoDataFrame(pd.DataFrame([c_current], columns=['geometry']), geometry='geometry')
+        current_list = []
+        while len(current_list) < section_pts*3:
+            current_list.append(Point([random.uniform(min_x + random.uniform(0,100), max_x - random.uniform(0,100)), random.uniform(min_y + random.uniform(0,100), max_y - random.uniform(0,100))]))
+            
+        gdf = gpd.GeoDataFrame(pd.DataFrame(current_list, columns=['geometry']), geometry='geometry')
+        gdf = gdf.sjoin(buffer_gdf, predicate='within')
+        points_gdf = pd.concat([points_gdf, gdf], ignore_index=True)
+
+    #df = pd.DataFrame(points, columns=['geometry'])
+    #gdf = gpd.GeoDataFrame(df, geometry='geometry')
+
+    print("Number of points generated:", len(points_gdf))
+    return points_gdf.iloc[0:num_points]
+
+########## POINT GENERATION FUNCTIONS ##########
+
+def points_uniform_old(poly, num_points):
     global global_rejected_points
     global global_accepted_points
     min_x, min_y, max_x, max_y = poly.bounds
@@ -69,13 +197,13 @@ def points_uniform(poly, num_points):
             points.append(random_point)
 
     # List of points is converted to a GeoDataFrame
-    #df = pd.DataFrame(points, columns=['geometry'])
-    #gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    df = pd.DataFrame(points, columns=['geometry'])
+    gdf = gpd.GeoDataFrame(df, geometry='geometry')
 
-    return points
+    return gdf #points
 
 
-def points_moving_centre(poly, num_points):
+def points_moving_centre_old(poly, num_points):
     global global_rejected_points
     global global_accepted_points
     min_x, min_y, max_x, max_y = poly.bounds
@@ -128,13 +256,12 @@ def points_moving_centre(poly, num_points):
                 section_num += 1
 
     # Points list is converted to a GeoDataFrame and outputted
-    #df = pd.DataFrame(points, columns=['geometry'])
-    #gdf = gpd.GeoDataFrame(df, geometry='geometry')
-    # gdf.crs = poly.crs
-    return points
+    df = pd.DataFrame(points, columns=['geometry'])
+    gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    return gdf #points
 
 
-def points_centre(poly, num_points):
+def points_centre_old(poly, num_points):
     global global_rejected_points
     global global_accepted_points
     
@@ -169,10 +296,10 @@ def points_centre(poly, num_points):
             if (current_pts >= section_pts):
                 section_num += 1
 
-    #df = pd.DataFrame(points, columns=['geometry'])
-    #gdf = gpd.GeoDataFrame(df, geometry='geometry')
+    df = pd.DataFrame(points, columns=['geometry'])
+    gdf = gpd.GeoDataFrame(df, geometry='geometry')
 
-    return points
+    return gdf #points
 
 # functions relating to voronoi polygon generation
 
@@ -186,8 +313,8 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     #source = source.set_crs(epsg=3857)
 
     # The geometries of the Shapely points are converted to a numpy array for use in the kmeans algorithm
-    #feature_coords = np.array([[e.x, e.y] for e in source.geometry])
-    feature_coords = np.array([[e.x, e.y] for e in source])
+    feature_coords = np.array([[e.x, e.y] for e in source.geometry])
+    #feature_coords = np.array([[e.x, e.y] for e in source])
 
     # A kmeans object is created using the specified number of clusters
     kmeans = KMeans(num_cluster, random_state=glob_random_seed)
@@ -196,8 +323,7 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     # The cluster centres are stored as centroids, and this list is put into a GeoDataFrame and returned
     centroids = kmeans.cluster_centers_
     df = pd.DataFrame(centroids, columns=['x', 'y'])
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y))
-    gdf.crs = poly.crs
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.x, df.y), crs=poly.crs)
 
     return gdf
 
@@ -548,7 +674,7 @@ def primary_generation(source, total_pts, ratio, rand_centroid):
         vor_all = gpd.GeoDataFrame(pd.DataFrame(vor_all, columns=['geometry']), geometry='geometry', crs=source.crs)
 
         vor_points = round(bulk_points / 5)
-        primary_pts = []
+        primary_pts = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
         for i in range(len(vor_all)):
             if bulk_points % 5 != 0:
                 if i == len(vor_all[0])-1:
@@ -559,11 +685,13 @@ def primary_generation(source, total_pts, ratio, rand_centroid):
             else:
                 gdf = points_centre(vor_all.loc[i, 'geometry'], vor_points)
 
-            primary_pts += gdf
+            primary_pts = pd.concat([primary_pts, gdf], ignore_index=True)
     else:
         primary_points = []
 
-    vor_pts = gpd.GeoDataFrame(pd.DataFrame(primary_pts, columns=['geometry']), geometry='geometry', crs=source.crs)
+    #vor_pts = gpd.GeoDataFrame(pd.DataFrame(primary_pts, columns=['geometry']), geometry='geometry', crs=source.crs)
+    vor_pts = primary_pts
+
     return vor_pts, vor_union
 
 def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
@@ -600,7 +728,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         local_vor_polygons.crs = source.crs
 
         #local_gdf = gpd.GeoDataFrame()
-        local_point_list = []
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
                 if i == vor_num-1:
@@ -609,7 +737,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
 
             current = points_centre(local_vor_polygons['geometry'][i], local_vor_points)
             #local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
-            local_point_list += current
+            local_gdf = pd.concat([local_gdf, current], ignore_index=True)
         print("\tSecondary generation complete.")
 
     # Local generation with variable area Voronoi polygons with number of points based on area
@@ -632,7 +760,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         local_area_union = local_vor_polygons.dissolve()
         local_area = local_area_union.area
 
-        local_gdf = gpd.GeoDataFrame()
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
 
         print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
@@ -642,7 +770,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
                 area_prop = local_vor_polygons['geometry'][i].area / local_area
                 current_local_points = int(local_points * area_prop)
             current = points_centre(local_vor_polygons['geometry'][i], current_local_points)
-            local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
+            local_gdf = pd.concat([local_gdf, current], ignore_index=True)
         print("\tSecondary generation complete.")
 
     # Local generation with variable area Voronoi polygons with equal number of points in each
@@ -664,7 +792,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         # the polyogn crs is set as the main polygon crs
         local_vor_polygons.crs = source.crs
 
-        local_gdf = gpd.GeoDataFrame()
+        local_gdf = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
         print("\tBeginning Secondary points generation...")
         for i in range(0, vor_num):
             if local_points % vor_num != 0:
@@ -672,7 +800,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
                     temp = local_vor_points * i
                     local_vor_points = local_points - temp
             current = points_centre(local_vor_polygons['geometry'][i], local_vor_points)
-            local_gdf = gpd.GeoDataFrame(local_gdf.append(current, ignore_index=True))
+            local_gdf = pd.concat([local_gdf, current], ignore_index=True)
 
         print("\tSecondary generation complete.")
 
@@ -680,7 +808,7 @@ def secondary_generation(source, total_pts, ratio, gen_type, vor_num):
         print("Skipping secondary generation.")
         local_gdf = gpd.GeoDataFrame([])
 
-    local_gdf = gpd.GeoDataFrame(pd.DataFrame(local_point_list, columns=['geometry']), geometry='geometry', crs=source.crs)
+    #local_gdf = gpd.GeoDataFrame(pd.DataFrame(loca, columns=['geometry']), geometry='geometry', crs=source.crs)
 
     return local_gdf, local_vor_polygons
 
@@ -750,23 +878,18 @@ def radian():
 
     ########## POINTS GENERATION ##########
 
-    try:
-        print("Beginning Primary generation...")
-        primary_points, primary_vor_polygons = primary_generation(source, total_pts, ratio, rand_centroid)
-        print("\tPrimary generation complete.")
-    except:
-        print("Primary generation failed.")
-    try:  
-        print("Beginning Secondary generation...")
-        secondary_points, local_vor_polygons = secondary_generation(source, total_pts, ratio, gen_type, vor_num)
-        print("\tSecondary generation complete.")
-    except:
-        print("Secondary generation failed.")
+    print("Beginning Primary generation...")
+    primary_points, primary_vor_polygons = primary_generation(source, total_pts, ratio, rand_centroid)
+    print("\tPrimary generation complete.")
+
+    print("Beginning Secondary generation...")
+    secondary_points, local_vor_polygons = secondary_generation(source, total_pts, ratio, gen_type, vor_num)
+    print("\tSecondary generation complete.")
     
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
 
     gdf_out = gpd.GeoDataFrame(primary_points.append(secondary_points, ignore_index=True))
-    gdf_out = gdf_out.to_crs(epsg=4326)
+    gdf_out = gdf_out.set_crs(epsg=4326)
 
     ########## ADDITIONAL METADATA GENERATION ##########
 
@@ -826,7 +949,7 @@ def radian():
         gdf_poly_to_sql("voronoi_poly_test", local_vor_polygons, directory)
 
     ########## PRINTING GENERATION DIAGNOSTICS ##########
-
+    """
     print("Generation info:")
     print("\tTotal accepted points: " + str(global_accepted_points))
     print("\tTotal rejected points: " + str(global_rejected_points))
@@ -837,7 +960,7 @@ def radian():
     diag_text += "Mean ratio: " + str(sum(glob_ratio_list)/len(glob_ratio_list))
 
     print("\tGeneration seed: " + str(glob_random_seed))
-
+    """
     end_time = time.time()
 
     print("Generation time taken = ", (end_time-start_time))
@@ -845,7 +968,7 @@ def radian():
     ########### DATA PREVIEW ##########
 
     if(preview):
-        print(gdf_out.head())
+        print(f"Total points: {len(gdf_out)}\n", gdf_out.head())
 
     ########## PLOTTING DATA ##########
 

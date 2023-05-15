@@ -3,7 +3,7 @@
 	"set_seed": false,
 	"epsg":4326,
 	"seed" : 1878019349,
-	"total_pts":400,
+	"total_pts":500,
 	"gen_type":1,
 	"rand_centroid":true,
 	"ratio":50,

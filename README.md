@@ -11,6 +11,8 @@ A short demonstration video is available [here](https://maynoothuniversity-my.sh
 ## **Running the Software**
 Running the tool will require installation of the necessary third-party packages including geopandas. The `radian.py` file must be run in the same directory as the `parameters.json` file. A detailed description of the running parameters and their expected values/limits is available [here](https://github.com/paddeaux/msc_rng/wiki/Parameters).
 
+The once the `parameters.json` file is listed in the same directory as `radian.py`, the tool can be executed by simply runningthe `radian.py` file from the command line.
+
 ## **Sample Run**
 
 Let's say we wish to generate a synthetic dataset representing *fast food restaurants* in **Glasgow**. We will generate 400 points, each with a phone number, opening & closing time, area code, and finally the name of the restaurant. The parameters used for this generation can be viewed [here](https://github.com/paddeaux/msc_rng/blob/main/glasgow_example.json).
