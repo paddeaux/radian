@@ -75,8 +75,9 @@ def points_uniform(poly, num_points, epsg):
 
     gdf = gpd.GeoDataFrame(pd.DataFrame(points, columns=['geometry']), geometry='geometry', crs=epsg)
     gdf = gdf.sjoin(poly_gdf, predicate='within')
+    gdf = gdf.drop(['index_right'], axis=1)
 
-    return gdf.iloc[0:num_points]
+    return gdf.iloc[0:num_points].reset_index(drop=True)
     
     #return gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry')
 
@@ -131,6 +132,7 @@ def points_moving_centre(poly, num_points):
         gdf = gdf.sjoin(buffer_gdf, predicate='within')
         gdf = gdf.drop(['index_right'], axis=1)
         gdf = gdf.sjoin(poly_gdf, predicate='within')
+        gdf = gdf.drop(['index_right'], axis=1)
 
         points_gdf = pd.concat([points_gdf, gdf],ignore_index=True)
 
@@ -138,7 +140,7 @@ def points_moving_centre(poly, num_points):
     # Points list is converted to a GeoDataFrame and outputted
     #df = pd.DataFrame(points, columns=['geometry'])
     #gdf = gpd.GeoDataFrame(df, geometry='geometry')
-    return points_gdf.iloc[0:num_points]
+    return points_gdf.iloc[0:num_points].reset_index(drop=True)
 
 def points_centre(poly, num_points):
     global global_rejected_points
@@ -172,12 +174,14 @@ def points_centre(poly, num_points):
         gdf = gdf.sjoin(buffer_gdf, predicate='within')
         gdf = gdf.drop(['index_right'], axis=1)
         gdf = gdf.sjoin(poly_gdf, predicate='within')
+        gdf = gdf.drop(['index_right'], axis=1)
+
         points_gdf = pd.concat([points_gdf, gdf], ignore_index=True)
 
     #df = pd.DataFrame(points, columns=['geometry'])
     #gdf = gpd.GeoDataFrame(df, geometry='geometry')
 
-    return points_gdf.iloc[0:num_points]
+    return points_gdf.iloc[0:num_points].reset_index(drop=True)
 
 ########## OLD POINT GENERATION FUNCTIONS ##########
 # 180,000 points in 501 seconds
