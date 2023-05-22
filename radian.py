@@ -20,7 +20,7 @@ import contextily as cx
 import warnings
 
 # voroni generation packages
-from shapely.ops import cascaded_union
+from shapely.ops import unary_union, cascaded_union
 from geovoronoi import voronoi_regions_from_coords, points_to_coords
 
 # k-means clustering packages
@@ -144,6 +144,7 @@ def points_centre(poly, num_points):
     global global_rejected_points
     global global_accepted_points
     min_x, min_y, max_x, max_y = poly.bounds
+    # When a multipolygon is generated and passed here an error is thrown - need to catch seed of it not working
     poly_gdf = gpd.GeoDataFrame(pd.DataFrame([poly], columns=['geometry']), geometry='geometry')
 
     cx, cy = poly.centroid.x, poly.centroid.y
@@ -228,7 +229,8 @@ def voronoi_gen(poly, poly_centroid, vor_num, gen_type):
     # Setting crs to meter based projection
 
     # Convert the boundary geometry into a union of the polygon
-    boundary_shape = cascaded_union(poly)#.geometry)
+    #boundary_shape = cascaded_union(poly) Depreciated
+    boundary_shape = unary_union(poly)
     coords = points_to_coords(vor_centroids.geometry)
 
     # Calculating the voronoi regions
@@ -242,7 +244,7 @@ def voronoi_gen(poly, poly_centroid, vor_num, gen_type):
     gdf_poly['dist_to_centre'] = 0
     for i in range(vor_num):
         if(gen_type == 'rand'):
-            current = gdf_poly['geometry'][i].centroid.distance(gdf_centroid.iloc[0])
+            current = gdf_poly['geometry'][i].centroid.distance(gdf_centroid.iloc[0].geometry)
         else:
             current = gdf_poly['geometry'][i].centroid.distance(
             shapely.geometry.Point(poly.centroid.x, poly.centroid.y))
@@ -866,7 +868,7 @@ def radian_uniform():
     ########## POINTS GENERATION ##########
 
     source = source_gdf.loc[0, 'geometry']
-    gdf_out = points_uniform(source, total_pts, 3857)
+    gdf_out = points_uniform(source, total_pts)
     
         ########## EXPORTING OF DATA ##########
 
