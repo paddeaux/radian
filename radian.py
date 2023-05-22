@@ -847,40 +847,47 @@ def radian():
 
     print('*' * star_width)
 
-def radian_uniform():
+def radian_uniform(total_pts, source):
 
     start_time = time.time()
-    params = json.load(open("parameters.json"))
-    set_seed = params["set_seed"]
 
-    filepath = params["filepath"]
-    epsg = params['epsg']
-    total_pts = params["total_pts"]
-
-    # Global diagnostic variables
-
-    # Reading in the GeoJSON file and setting the CRS to a meter-based projection
-    print("Reading {}...".format(filepath))
-    source_gdf = gpd.read_file(filepath)
-    source_gdf = source_gdf.to_crs(epsg=3857)
-    print("\t{} loaded as source polygon.".format(filepath))
-
+    
     ########## POINTS GENERATION ##########
 
-    source = source_gdf.loc[0, 'geometry']
-    gdf_out = points_uniform(source, total_pts)
+    gdf_out = points_uniform(source.loc[0, 'geometry'], total_pts)
     
-        ########## EXPORTING OF DATA ##########
+    ########## EXPORTING OF DATA ##########
 
-    # Set exported CRS
-    gdf_out = gdf_out.to_crs(epsg)
-    
     end_time = time.time()
+    
+    time_taken = end_time - start_time
 
-    print("Generation time taken = ", (end_time-start_time))
+    return time_taken 
 
-    ########### DATA PREVIEW ##########
+def qgis_compare(filepath, iterations):
+    print("Reading {}...".format(filepath))
+    # Reading in the GeoJSON file and setting the CRS to a meter-based projection
+    source_gdf = gpd.read_file(filepath)
+    source_gdf = source_gdf.to_crs(epsg=3857)
 
-    print(f"Total points: {len(gdf_out)}\n", gdf_out.head())
+    points_list = [100 * np.power(2,i) for i in range(11)]
+    output = pd.DataFrame([])
+    print("Generating points...")
+    for x in range(iterations):
+        gen_times = []
+        for points in points_list:
+            gen_times.append(radian_uniform(points, source_gdf))
+        df = pd.DataFrame(zip([x+1 for i in range(len(points_list))], points_list, gen_times), columns=['experiment','points','time'])
+        output = pd.concat([output, df])
+    print("Iterations complete.")
+    output = output.reset_index(drop=True)
 
-radian()
+    print("Plotting data...")
+    groups = output.groupby('experiment')
+    for name, group in groups:
+        plt.plot(group.time, group.points, marker='o', linestyle='', markersize=5, label=name)
+
+    plt.show()
+
+qgis_compare('scenarios/kildare/kildare.geojson', 10)
+
