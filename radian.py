@@ -864,7 +864,7 @@ def radian_uniform(total_pts, source):
 
     return time_taken 
 
-def qgis_compare(filepath, iterations):
+def uniform_benchmark(filepath, iterations):
     print("Reading {}...".format(filepath))
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source_gdf = gpd.read_file(filepath)
@@ -872,22 +872,38 @@ def qgis_compare(filepath, iterations):
 
     points_list = [100 * np.power(2,i) for i in range(11)]
     output = pd.DataFrame([])
-    print("Generating points...")
+    print(f"* Generating points for {iterations} iterations...")
     for x in range(iterations):
+        print("** iteration", x)
         gen_times = []
         for points in points_list:
             gen_times.append(radian_uniform(points, source_gdf))
         df = pd.DataFrame(zip([x+1 for i in range(len(points_list))], points_list, gen_times), columns=['experiment','points','time'])
         output = pd.concat([output, df])
-    print("Iterations complete.")
+    print("* Iterations complete.")
     output = output.reset_index(drop=True)
 
+    print("Saving data to .csv...")
+    data_path = f"{os.path.dirname(filepath)}/QGIS"
+    if not os.path.exists(data_path):
+        os.makedirs(data_path)
+    output.to_csv(f"{data_path}/radian_uniform_{iterations}.csv", index=False)
+
+def qgis_compare(filepath, iterations=10):
+    radian_data_path = f"{os.path.dirname(filepath)}/QGIS/radian_uniform_{iterations}.csv"
+    if not os.path.exists(radian_data_path):
+        print(f"* Running RADIAN uniform generation for {iterations} iterations...")
+        uniform_benchmark(filepath, iterations)
+    else:
+        print("* File already exists - skipping generation...")
+    print("Loading RADIAN data...")
+    radian_data = pd.read_csv(radian_data_path)
+    
     print("Plotting data...")
-    groups = output.groupby('experiment')
+    groups = radian_data.groupby('experiment')
     for name, group in groups:
-        plt.plot(group.time, group.points, marker='o', linestyle='', markersize=5, label=name)
+        plt.plot(group.points, group.time, marker='o', linestyle='', markersize=5, label=name)
 
     plt.show()
 
-qgis_compare('scenarios/kildare/kildare.geojson', 10)
-
+radian()
