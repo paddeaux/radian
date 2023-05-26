@@ -1,5 +1,6 @@
 {
 	"filepath":"scenarios/us_fast_food/usa.geojson",
+	"uniform_mode":false,
 	"set_seed": false,
 	"epsg":4326,
 	"seed" : 2013592390,

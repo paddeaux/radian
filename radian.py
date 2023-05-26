@@ -870,16 +870,18 @@ def uniform_benchmark(filepath, iterations):
     source_gdf = gpd.read_file(filepath)
     source_gdf = source_gdf.to_crs(epsg=3857)
 
-    points_list = [100 * np.power(2,i) for i in range(11)]
+    points_list = [100 * np.power(2,i) for i in range(14)]
     output = pd.DataFrame([])
     print(f"* Generating points for {iterations} iterations...")
     for x in range(iterations):
         print("** iteration", x)
         gen_times = []
         for points in points_list:
+            print(f"* {x}: {points} points...")
             gen_times.append(radian_uniform(points, source_gdf))
         df = pd.DataFrame(zip([x+1 for i in range(len(points_list))], points_list, gen_times), columns=['experiment','points','time'])
         output = pd.concat([output, df])
+        print("done.")
     print("* Iterations complete.")
     output = output.reset_index(drop=True)
 
@@ -888,6 +890,8 @@ def uniform_benchmark(filepath, iterations):
     if not os.path.exists(data_path):
         os.makedirs(data_path)
     output.to_csv(f"{data_path}/radian_uniform_{iterations}.csv", index=False)
+
+    print(output)
 
 def qgis_compare(filepath, iterations=10):
     radian_data_path = f"{os.path.dirname(filepath)}/QGIS/radian_uniform_{iterations}.csv"
@@ -906,4 +910,4 @@ def qgis_compare(filepath, iterations=10):
 
     plt.show()
 
-radian()
+uniform_benchmark('scenarios/us_fast_food/usa.geojson', 1)
