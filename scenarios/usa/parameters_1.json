@@ -1,0 +1,23 @@
+{
+	"filename":"scenarios/us_fast_food/usa.geojson",
+	"total_pts":180000,
+	"gen_type":2,
+	"ratio":0.2,
+	"vor_num": 48,
+	"rand_centroid":false,
+	"int_range": [1,100000],
+	"string_len": 15,
+	"timestamp_range": ["2022-01-01 00:00:00", "2022-12-31 23:59:59"],
+	"to_sql":true,
+	"to_geojson":true,
+	"to_png":true,
+	"png_filename":"1",
+	"plot":false,
+	"breakdown":true,
+	"basemap": true,
+	"extra_var":true,
+	"extra_var_name":["fast_food_name"],
+	"extra_var_file":["scenarios/us_fast_food/fast_food.csv"],
+	"set_seed": false,
+	"seed" : 1261297903
+}

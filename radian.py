@@ -16,8 +16,10 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import contextily as cx
 import warnings
+from tqdm import tqdm
 
 # voroni generation packages
 from shapely.ops import unary_union, cascaded_union
@@ -67,16 +69,17 @@ def points_uniform(poly, num_points):
 
     points = []
     # Generates points repeatedly with a uniform generation within the bounds of the polygon
+    pbar = tqdm(desc=f'Generating points...', total=num_points)
     while len(points) < round(num_points * poly_ratio):
         points.append(Point([random.uniform(min_x, max_x), random.uniform(min_y, max_y)]))
-
+        pbar.update(1)
     gdf = gpd.GeoDataFrame(pd.DataFrame(points, columns=['geometry']), geometry='geometry', crs=3857)
     gdf = gdf.sjoin(poly_gdf, predicate='within')
     gdf = gdf.drop(['index_right'], axis=1)
 
     old_length = len(gdf)
     global_rejected_points += old_length - num_points
-
+    pbar.close()
     return gdf.iloc[0:num_points].reset_index(drop=True)
     
 def points_moving_centre(poly, num_points):
@@ -632,40 +635,65 @@ def secondary_generation(source, source_centroid, total_pts, gen_type, vor_num, 
 ########## OUTPUT FUNCTIONS
 
 def plot_output(polygon, polygon_centroid, buffers, voronoi, vor_centroid, primary_points, secondary_points, basemap, epsg):
-    fig, axs = plt.subplots(2,2, figsize=(10,8))
+    minx, miny, maxx, maxy = polygon.total_bounds
+    width = maxx - minx
+    height = maxy - miny
+
+    aspect_ratio = width/height
+    fig_width = 8
+    fig_height = 8
+
+    if aspect_ratio > 1:
+        fig_height = fig_width / round(aspect_ratio)
+    else:
+        fig_width = fig_height / round(aspect_ratio)
+
+    if basemap:
+        fig, axs = plt.subplots(2,2, figsize=(fig_width, fig_height))
+        axs = axs.flatten()
+    else:
+        fig = plt.figure(figsize=(fig_width,fig_height))
+        gs = gridspec.GridSpec(4, 4)
+        ax1 = plt.subplot(gs[0:2, :2])
+        ax2 = plt.subplot(gs[0:2, 2:4])
+        ax3 = plt.subplot(gs[2:4, 1:3])
+        axs = [ax1, ax2, ax3]
+    
     fig.tight_layout()
-    fig.suptitle(f"RADIAN Synthetic Spatial Data Generator\n{len(primary_points)} primary points, {len(secondary_points)} secondary points\nProjected to EPSG:{epsg}")
+    fig.suptitle(f"{len(primary_points)} primary points, {len(secondary_points)} secondary points - Projected to EPSG:{epsg}")
+    plt.get_current_fig_manager().set_window_title("RADIAN (\u03C0) - Synthetic Spatial Data Generator")
 
     subtitles = ["Primary Generation", "Secondary Generation", "Full Generation", "Full Generation (basemap)"]
+    point_size = 0.5
 
     # Primary generation
-    buffers.plot(ax=axs[0,0], cmap='Blues', edgecolor='white')
-    polygon.centroid.plot(ax=axs[0,0], color='red', markersize=3)
-    primary_points.plot(ax=axs[0,0], color='green', markersize=1.5)
+    buffers.plot(ax=axs[0], cmap='Blues', edgecolor='white')
+    polygon.centroid.plot(ax=axs[0], color='red', markersize=3)
+    primary_points.plot(ax=axs[0], color='green', markersize=point_size)
 
     # Secondary generation
-    voronoi.plot(ax=axs[0,1], cmap='Blues', edgecolor='white')
+    voronoi.plot(ax=axs[1], cmap='Blues', edgecolor='white')
     #vor_centroid.plot(ax=axs[0,1], color='red', markersize=3)
-    secondary_points.plot(ax=axs[0,1], color='green', markersize=1.5)
-    vor_centroid.plot(ax=axs[0,1], color='red', markersize=10)
+    secondary_points.plot(ax=axs[1], color='green', markersize=point_size)
+    vor_centroid.plot(ax=axs[1], color='red', markersize=10)
 
     # Full generation
-    buffers.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
-    voronoi.plot(ax=axs[1,0], cmap='Blues', edgecolor='white', alpha=0.25)
+    buffers.plot(ax=axs[2], cmap='Blues', edgecolor='white', alpha=0.25)
+    voronoi.plot(ax=axs[2], cmap='Blues', edgecolor='white', alpha=0.25)
 
-    for ax in axs.flatten()[2:4]:
-        primary_points.plot(ax=ax, color='green', markersize=1.5)
-        secondary_points.plot(ax=ax, color='green', markersize=1.5)
+    for ax in axs[2:4]:
+        primary_points.plot(ax=ax, color='green', markersize=point_size)
+        secondary_points.plot(ax=ax, color='green', markersize=point_size)
 
     # Printing source polygon border and setting subplot titles
-    for i, ax in enumerate(axs.flatten()):
+    for i, ax in enumerate(axs):
         ax.axis("off")
         ax.set_title(subtitles[i],y=0.05, pad=-14)
         polygon.plot(ax=ax, edgecolor='black', facecolor='none')
         polygon_centroid.plot(ax=ax, color='red', markersize=10)
 
     # Basemap
-    if basemap: cx.add_basemap(axs[1,1], attribution=False)
+    if basemap: cx.add_basemap(axs[3], attribution=False)
     plt.show()
 
 def radian():
@@ -870,7 +898,7 @@ def uniform_benchmark(filepath, iterations):
     source_gdf = gpd.read_file(filepath)
     source_gdf = source_gdf.to_crs(epsg=3857)
 
-    points_list = [100 * np.power(2,i) for i in range(14)]
+    points_list = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000]
     output = pd.DataFrame([])
     print(f"* Generating points for {iterations} iterations...")
     for x in range(iterations):
@@ -910,4 +938,6 @@ def qgis_compare(filepath, iterations=10):
 
     plt.show()
 
-uniform_benchmark('scenarios/us_fast_food/usa.geojson', 1)
+#uniform_benchmark('scenarios/us_fast_food/usa.geojson', 1)
+
+radian()

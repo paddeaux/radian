@@ -1,0 +1,525 @@
+string,weight
+McDonald's,1971
+Burger King,1154
+Taco Bell,873
+Wendy's,731
+Arby's,518
+KFC,441
+Subway,404
+Domino's Pizza,345
+SONIC Drive In,248
+Jack in the Box,201
+Hardee's,192
+Jimmy John's,157
+Chick-fil-A,146
+Sonic Drive-In,138
+McDonalds,134
+Pizza Hut,128
+Bojangles' Famous Chicken 'n Biscuits,126
+Five Guys,96
+Dairy Queen,92
+Whataburger,88
+Taco John's,77
+Waffle House,74
+Carl's Jr.,74
+Krystal,64
+White Castle,54
+Checkers,46
+Boston Market,45
+Del Taco,44
+Quiznos,42
+Culver's,38
+El Pollo Loco,33
+Panda Express,32
+Church's Chicken,32
+Rally's,30
+Captain D's,27
+Long John Silver's,25
+Steak 'n Shake,22
+Popeyes Louisiana Kitchen,21
+Hardee's / Red Burrito,19
+Popeye's Chicken & Biscuits,17
+Gold Star Chili,16
+Wienerschnitzel,16
+Dunkin' Donuts,15
+Little Caesars Pizza,15
+Dominos Pizza,14
+Blimpie,14
+Taco Time,13
+Baja Fresh,13
+In-N-Out Burger,13
+Long John Silvers,13
+QDOBA Mexican Eats,13
+Raising Cane's Chicken Fingers,12
+Sonic,12
+Papa John's Pizza,11
+Panera Bread,11
+Chicken Express,11
+Pei Wei,10
+Penn Station East Coast Subs,10
+Carl's Jr,10
+Carl's Jr. / Green Burrito,10
+Chipotle Mexican Grill,9
+Mc Donald's,9
+Qdoba Mexican Grill,8
+Pollo Tropical,8
+Dunkin Donuts,8
+Fazoli's,8
+Baskin-Robbins,8
+Taco Bueno,7
+Skyline Chili,7
+Captain D's Seafood,7
+Runza,7
+Popeye's,7
+Firehouse Subs,7
+Kentucky Fried Chicken,7
+Popeyes,7
+Jersey Mike's Subs,6
+Mr Hero,6
+Sarku Japan,6
+Jimmy Johns,6
+Ryan's,6
+Arctic Circle,6
+Blake's LotaBurger,6
+Amigos/Kings Classic,5
+Cook Out,5
+Popeyes Chicken and Biscuits,5
+A&W Restaurant,5
+Rally's Hamburgers,5
+Round Table Pizza,5
+Back Yard Burgers,4
+Rallys,4
+Golden Chick,4
+Topper's Pizza,4
+Popeyes Chicken & Biscuits,4
+Kum & Go,4
+Papa Johns Pizza,4
+Saladworks,4
+Papa Gino's,4
+A&W,4
+A&W All-American Food,4
+Raising Cane's,4
+Farmer Boys,4
+Goodcents Deli Fresh Subs,3
+KFC / Taco Bell,3
+Baker's Drive Thru,3
+Lee's Famous Recipe Chicken,3
+TacoTime,3
+KFC - Kentucky Fried Chicken,3
+Old Country Buffet,3
+Roy Rogers,3
+Lion's Choice,3
+Pita Pit,3
+Slim Chickens,3
+Wendys,3
+Popeye's Louisiana Kitchen,3
+Auntie Anne's,3
+Good Times Burgers & Frozen Custard,3
+Taco Del Mar,3
+Wingstreet,3
+Capriotti's Sandwich Shop,3
+Taqueria,3
+Taco Cabana,3
+Hot Dog On A Stick,3
+A&W All American Food,3
+Sbarro,3
+Redbox,3
+D'Angelo Grilled Sandwiches,3
+Schlotzsky's,3
+Frisch's Big Boy,2
+Penguin Point,2
+SUBWAY®,2
+Mr. Hero,2
+Wetzel's Pretzels,2
+Taco Mayo,2
+Dairy Cheer,2
+Moe's Southwest Grill,2
+Cook-Out,2
+Hardees,2
+Bob Evans,2
+Au Bon Pain,2
+Baja Fresh Mexican Grill,2
+Wingstop,2
+Thrasher's French Fries,2
+DQ Grill & Chill,2
+Port Of Subs,2
+KFC/Taco Bell,2
+Smashburger,2
+Bob Evans Restaurant,2
+Pollo Campero,2
+L&l Hawaiian Barbecue,2
+Braum's,2
+Blimpie Subs & Sandwiches,2
+Checker's,2
+Popeye's Chicken,2
+Steak N Shake,2
+Arbys,2
+Cousins Subs,2
+Grandy's,2
+Carl's Jr / Green Burrito,2
+Crown Fried Chicken,2
+Zaxby's,2
+Steak Escape,2
+Quiznos Sub,2
+The Flame Broiler,2
+OMG! Rotisserie,1
+Hamburger King,1
+Coop DeVille,1
+B. Good,1
+Pacific Rim,1
+Samurai Sam's,1
+Northeastern State University,1
+Integrated Therapy Specialists: Arnold D Larson,1
+Jacks Grocery,1
+Ernie's All American Burger,1
+Windmill Gourmet Fast Foods,1
+b.good,1
+Moe's Original Bar B Que,1
+Nick's Burgers,1
+Mickey's Gyros & Ribs,1
+Sensenig Poultry LLC,1
+Frugals,1
+Seaside Eatery,1
+Granny's Drive-In,1
+Jolly's Drive-In,1
+Blondies,1
+Great Steak,1
+Dairy Freeze,1
+Lime Ricky World,1
+A&W/Long John Silvers,1
+Pick Up Stix,1
+Fallguys Burger Company,1
+McLaren's Pantry,1
+Red Robin Gourmet Burgers,1
+Buds Chicken & Seafood,1
+Sconecutter,1
+Zip's Hamburgers And Fish,1
+Rush's,1
+Pizza Barn,1
+Taco Casa,1
+Tom's Drive In,1
+Tudor's Biscuit World,1
+Kasa's Pizza,1
+Dewey's Pizza,1
+Custard Hut & Pizza,1
+Blakes Lotaburger,1
+George's Gyros Spot,1
+El Paragua Restaurant,1
+Burger Time,1
+Cherry Hill Drive In Ice Cream,1
+Flip Burger Bar,1
+Greyhound,1
+Noodles & Company,1
+Pal's Sudden Service,1
+Don & Millie's,1
+Tommy's Sub Shop,1
+BIG & little's Restaurant,1
+Cafe Rio,1
+Char-Grill,1
+Crispy Chicken & Seafood,1
+Toppers Pizza,1
+Taco Delight,1
+Kenny's Drive-In,1
+"MOOYAH Burgers, Fries & Shakes",1
+The Pita Pit,1
+Shot Tower Inn,1
+Handy's Lunch,1
+Meatheads,1
+Jack Pirtles Chicken,1
+Dairy Isle,1
+Shoney's on the Go,1
+Richie's Restaurant,1
+Yellow Cab Pizza Co.,1
+Jack's,1
+Rancher's Roast Beef Inc.,1
+Pizza Factory,1
+In-A-Tub,1
+Crystal Restaurant,1
+Burger's Landing,1
+Isabella's Pizzeria,1
+Fatburger,1
+Sunrise Cafe,1
+Capt Crab's Take-Away,1
+Ben & Jerry's,1
+31st Avenue Gyro,1
+Papa Johns,1
+Johnny Rockets,1
+Luby's,1
+Mayfair Boardwalk Grill,1
+Nino's Pizza,1
+Maria's Fry Bread & Mexican Food,1
+Papa John's,1
+Charleys Philly Steaks,1
+Papa John’s Pizza,1
+Nick's Gyros,1
+South-A-Philly Steaks and Hoagies,1
+DQ Grill & Chill / Orange Julius,1
+Lenny's Sub Shop,1
+Taco Local,1
+Stars Drive-In,1
+Original Tracks,1
+Subway Citgo of Quarryville,1
+Fuku,1
+Eldon Drive In,1
+Petro's Chili & Chips,1
+The Halal Guys,1
+Ny Chicken Fish,1
+Thunder Ridge Ampride,1
+Twisters,1
+Cookout,1
+Tasty Carryout,1
+Hub City Express,1
+Culvers,1
+Shloma Inc,1
+Bravo Tacos,1
+Papagus Gyros,1
+A & W Family Restaurant,1
+Los Verdes,1
+Bad Daddys Burger Bar,1
+AJ's Hotdogs & Gyros,1
+Rubio's Coastal Grill,1
+Cusinera,1
+St Louis Original Hamburgers,1
+Circle Drive In,1
+Woody's Sloppy Dogs,1
+Kum Go,1
+Mc Donalds,1
+JCW's,1
+The People Connection,1
+Hot Dog Heaven,1
+The Great Steak & Potato Co.,1
+Jim's Coney Island,1
+Charcoal Delights,1
+Sheetz,1
+McDonalds @ Old Atlanta,1
+Hungry Andy's,1
+Carls Jr,1
+Carl's / Green Burrito,1
+Wu's Fine Chinese Cuisine,1
+Steak-out,1
+Wings N' More Wings,1
+P. Terry's,1
+J J Fish and Chicken,1
+Greek Oven Pizza and Wings,1
+City Bites,1
+Smoothie King,1
+Bobby's Burger Palace,1
+Hometown Buffet,1
+Dairy Queen Grill & Chill,1
+The Biscuit Factory,1
+Subway (johnson) @ Jonesboro,1
+China King,1
+Stripes Store #2276,1
+Hotdoks,1
+Shepard's Drive-In,1
+McDonald's of Mililani Mauka,1
+Mariu Kebabberia Gastronomica,1
+Tropical Smoothie Cafe,1
+Fred's Store,1
+Bamboo Bistro,1
+LocoL,1
+Quick,1
+Backyard Burgers,1
+Jim Bob's Chicken Fingers,1
+Islands Restaurant,1
+Charlie's Chicken,1
+Famous Dave's,1
+Dawg House Grill,1
+Carl's Jr - Green Burrito,1
+Carls Jr. / Green Burrito,1
+Jimmy John's Gourmet Sandwiches,1
+The Agora,1
+Cody's Cafe,1
+Mcdonald's - Walmart,1
+Mcalister's Deli,1
+Bb&t,1
+Flash Foods / McDonald's,1
+B Z Breakfast Burgers Beyond,1
+Milo's Hamburgers,1
+Wings And Philly,1
+Nathan's Famous,1
+Gianni's Pizza,1
+Rich's Mighty Fine Burgers Grub,1
+Spangles,1
+Chuck Wagon,1
+Chicken House,1
+Dino's Gyros,1
+Jamjam,1
+Fab Wings N Burgers,1
+Pizza One,1
+The Chicken Place,1
+Chick-fil-a Superstition Springs Center,1
+Rahway Chicken & Burger Inc,1
+The Pizza Pipe Line,1
+Omega Drive-In,1
+China Buddha Inn II,1
+Geno's Fast Break,1
+Jersey Jacks Eatery,1
+Hardee's / Red Burrito / Dough Boys,1
+Kettle Restaurant,1
+Hoka Hoka Bento,1
+Iceberg Drive Inn,1
+Regal Cinemas Tikahtnu  16 IMAX & RPX,1
+Mario's Natural Roman Pizza,1
+Music City Subs,1
+Chick-fil-a Orange Avenue,1
+Gyros Kings,1
+McDonald’s,1
+Einstein Bros Bagels,1
+A&W All-American Foods,1
+Sammy Carry-Out,1
+Little Caesar's Pizza Smithfield,1
+Checkers Burgers and Fries,1
+Kerby's Koney Island,1
+Braum's Ice Cream & Dairy Store,1
+Tellers Tap Room & Kitchen,1
+Arby's Antigo,1
+Furr's,1
+Subway Sandwiches and Salads,1
+Bills Place,1
+Burger King Salou,1
+ShopRite,1
+Wendy Two Two Eight,1
+Boston Market 381,1
+Great Steak & Potato Co,1
+Mr Char-Burger,1
+Yum Brands Inc,1
+Ama Ristorante,1
+The Honeybaked Ham Company,1
+Snack Shack,1
+Boston Chowda Company,1
+Long John Silver's / A&W,1
+Aprisa Mexican Cuisine,1
+White Manna Hamburgers,1
+Food 4 Less,1
+Starbucks,1
+Brixton's,1
+Dairy Queen - Round Rock,1
+Peking Wok,1
+Panda,1
+Pop-A-Nugget,1
+Roly Poly,1
+KFC / A&W,1
+Thrashers French Fries,1
+Subway - Roland Park,1
+Garden Catering,1
+Foster's Freeze,1
+Rapid Ray's,1
+Portillo's,1
+Vista Drive In,1
+Tom's Grill,1
+Yoshinoya,1
+Subway - Bell's Ferry,1
+Pizza Hut Wingstreet,1
+Travelcenters of America,1
+Fitness 19,1
+Royal Buffet,1
+Lanesplitter Pizza & Pub,1
+World Wrapps,1
+Hunam Garden,1
+Soulfish Grill,1
+Kam's Chop Suey,1
+Ziti's Italian Express,1
+Rally's Springfield,1
+Subway Sandwiches,1
+Home Town Buffet,1
+Checker's Drive-in Restaurant,1
+Ll Hawaiian Barbecue,1
+Maui Tacos,1
+Checker's Hamburgers,1
+Frugal's,1
+Rafael's,1
+Garden Fast Food,1
+Froots,1
+Luxor Food Court,1
+Spangle's,1
+Subway Guitars,1
+Love's,1
+Cypress Best,1
+Siam To Go,1
+Bush's Chicken,1
+Chick-fil-a Truett's Luau,1
+Strongwater Spirits & Botanicals,1
+The Break Away Sports Cafe,1
+Charley's Grilled Subs,1
+Mcdonald's #25557,1
+Rocky's,1
+Chester's Grill,1
+44872,1
+Osgood's,1
+Dan's Seafood & Chicken,1
+Jason's Deli,1
+Breadeaux Pizza,1
+Sonic Drive-in (trailer),1
+Aw Restaurant,1
+7-Eleven,1
+Jollibee,1
+Kennedy Fried Chicken & Pizza,1
+Mocha Express,1
+Taco Bell/Pizza Hut Express,1
+Charlie Browns,1
+Ball State Lafollette Dining,1
+Tubby's Grilled Submarines,1
+Quizno's +,1
+Long John Silvers / A&W,1
+Comilao Lanches Bakery,1
+Gabby's Burgers & Fries,1
+Loco Moco Drive-Inn,1
+Pizza Express,1
+Alice's,1
+King Grill,1
+Freddy's Steakburger,1
+Cousins Subs of Green Bay - Oneida St. & Ramada Way,1
+Everest,1
+Jamba Juice,1
+Exxon,1
+BGR - The Burger Joint,1
+Chick-fil-a Magnolia Mall,1
+Tom & Jerry's,1
+Ivar's Seafood Bar,1
+Luna Corner Pizza,1
+Fosters Freeze,1
+Scoopers,1
+Eagan's Drive-In,1
+Omelette House,1
+Hermosa,1
+Costa Vida Fresh Mexican Grill,1
+Simmies Arirang Hill Cheese Steak,1
+Chris' Drive-In,1
+DQ Woodlands,1
+Rubio's,1
+Burgerville,1
+Lukes on Harlem,1
+Madison Street Subs,1
+Fresh City,1
+Denton's,1
+Teddy's Bigger Burgers,1
+Dairy Queen Grill & Chill / Orange Julius,1
+Elevation Burger,1
+Your Healthy Habit,1
+Mazatlan Mexican Restaurant,1
+Kim Lee Fast Food,1
+Cinnabon,1
+China King Restaurant,1
+Chickenow,1
+Chicago Union Station Food Court,1
+Paesano's,1
+B K,1
+Pizza Primetime,1
+Convergence Zone,1
+The Press Club,1
+Costa Vida,1
+Hegenburgers,1
+Pete's Burgers,1
+Dual - Carls / Grn Burrito 1100654,1
+Kings Contrivance Jewelers,1
+Great Steak And Potato Co,1
+Nielsen's Frozen Custard,1
+Tina's Carryout Restaurant,1
+Long John Silver/ A&W,1
+Car's Late Night Delivery,1
+Charkies,1
+El Tarasco Mexican Food,1
+"Burgerville, USA",1
+Italian Pizzeria Restaurant,1
+Lee's Oriental Martial Arts,1
