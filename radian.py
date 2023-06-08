@@ -938,6 +938,6 @@ def qgis_compare(filepath, iterations=10):
 
     plt.show()
 
-#uniform_benchmark('scenarios/us_fast_food/usa.geojson', 1)
+uniform_benchmark('scenarios/usa/usa.geojson', 10)
 
-radian()
+#radian()
