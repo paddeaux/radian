@@ -892,22 +892,55 @@ def radian_uniform(total_pts, source):
 
     return time_taken 
 
+def csv_to_geojson()
+
 def uniform_benchmark(filepath, iterations):
     print("Reading {}...".format(filepath))
     # Reading in the GeoJSON file and setting the CRS to a meter-based projection
     source_gdf = gpd.read_file(filepath)
     source_gdf = source_gdf.to_crs(epsg=3857)
-
+    save_dir = os.path.dirname(filepath)
+    if not os.path.exists(f"{save_dir}/QGIS_compare"):
+        os.makedirs(f"{save_dir}/QGIS_compare")
+    
     points_list = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000]
     output = pd.DataFrame([])
     print(f"* Generating points for {iterations} iterations...")
     for x in range(iterations):
         print("** iteration", x)
         gen_times = []
+        pkid_times = []
+        save_times_geojson = []
+        save_times_gpkg = []
+        save_times_csv = []
         for points in points_list:
             print(f"* {x}: {points} points...")
-            gen_times.append(radian_uniform(points, source_gdf))
-        df = pd.DataFrame(zip([x+1 for i in range(len(points_list))], points_list, gen_times), columns=['experiment','points','time'])
+            gen_start = time.time()
+            gdf_out = points_uniform(source_gdf.loc[0, 'geometry'], points)
+            gen_end = time.time()
+
+            pkid_start = time.time()
+            gdf_out.insert(0, 'PKID', range(0, len(gdf_out)))
+            pkid_end = time.time()
+
+            save_geojson_start = time.time()
+            gdf_out.to_file(f"{save_dir}/QGIS_compare/RADIAN_{points}.geojson", driver='GeoJSON')
+            save_geojson_end = time.time()
+
+            save_gpkg_start = time.time()
+            gdf_out.to_file(f"{save_dir}/QGIS_compare/RADIAN_{points}.gpkg", driver='GPKG', layer='name')
+            save_gpkg_end = time.time()
+
+            save_csv_start = time.time()
+            gdf_out.to_csv(f"{save_dir}/QGIS_compare/RADIAN_{points}.csv", index=False)
+            save_csv_end = time.time()
+
+            gen_times.append(gen_end - gen_start)
+            pkid_times.append(pkid_end - pkid_start)
+            save_times_geojson.append(save_geojson_end - save_geojson_start)
+            save_times_gpkg.append(save_gpkg_end - save_gpkg_start)
+            save_times_csv.append(save_csv_end - save_csv_start)
+        df = pd.DataFrame(zip([x+1 for i in range(len(points_list))], points_list, gen_times, pkid_times, save_times_geojson, save_times_gpkg, save_times_csv, [sum(i) for i in zip(gen_times, pkid_times, save_times_csv)]), columns=['experiment','points','gen_time', 'pkid_time', 'save_times_geojson', 'save_times_gpkg', 'save_times_csv', 'total_time'])
         output = pd.concat([output, df])
         print("done.")
     print("* Iterations complete.")
@@ -938,6 +971,6 @@ def qgis_compare(filepath, iterations=10):
 
     plt.show()
 
-uniform_benchmark('scenarios/usa/usa.geojson', 10)
+uniform_benchmark('scenarios/usa/usa.geojson', 1)
 
 #radian()
