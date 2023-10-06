@@ -791,7 +791,9 @@ def radian():
 
     # Merging the bulk and local point dataframes for output to SQL or GeoJSON
 
-    gdf_out = gpd.GeoDataFrame(primary_points.append(secondary_points, ignore_index=True), crs=epsg)     
+    #gdf_out = gpd.GeoDataFrame(primary_points.append(secondary_points, ignore_index=True), crs=epsg)     
+    gdf_out = gpd.GeoDataFrame(pd.concat([primary_points, secondary_points], ignore_index=True), crs=epsg)     
+
 
     print("* Points generated successfully!")
     print('*' * star_width)
@@ -949,6 +951,6 @@ def qgis_compare(filepath, iterations=1):
 
     plt.show()
 
-uniform_benchmark('scenarios/usa/usa.geojson', 1)
+#uniform_benchmark('scenarios/usa/usa.geojson', 1)
 
-#radian()
+radian()
