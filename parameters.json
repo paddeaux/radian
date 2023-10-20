@@ -7,7 +7,7 @@
 	"total_pts":1600,
 	"gen_type":1,
 	"rand_centroid":false,
-	"ratio":60,
+	"ratio":70,
 	"vor_num": 12,
 	"table_name":"paris_hotels_fake",
 	"to_sql":false,
@@ -26,5 +26,5 @@
 	"extra_var_name":["name"],
 	"extra_var_file":["paris_hotels.csv"],
 	"extra_var_params":[["str","var_name", "paris_hotels.csv"]],
-	"extra_var_dict": [{"type":"str", "name": "name", "source": "paris_hotels.csv"}]
+	"extra_var_dict": [{"type":"str", "name": "name", "source": "three_minute_thesis/paris_hotels.csv"}]
 }
