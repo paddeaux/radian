@@ -326,7 +326,7 @@ def gdf_poly_to_sql(table_name, gdf, directory):
     return
 
 
-def gdf_to_sql(table_name, gdf, num_rows, random_vars, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory):
+def gdf_to_sql(table_name, gdf, num_rows, random_var, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory):
     # Opens up an SQL file based on the table name, writes to the file and closes it
     sqlFile = open(f'{directory}/SQL/{table_name}.sql', "w")
     sqlFile.write("")
@@ -344,7 +344,7 @@ def gdf_to_sql(table_name, gdf, num_rows, random_vars, rand_var_types, rand_var_
     sqlFile.write('\tpkid SERIAL PRIMARY KEY NOT NULL, \n')
     sqlFile.write("\tthegeom GEOMETRY DEFAULT ST_GeomFromText('POINT(0,51)', 4326)")
 
-    if random_vars:
+    if random_var:
         sqlFile.write(',\n')
         for count, type in enumerate(rand_var_types):
             sqlFile.write(f'\t{rand_var_names[count]} {get_var_type(rand_var_types[count])}')
@@ -373,7 +373,7 @@ def gdf_to_sql(table_name, gdf, num_rows, random_vars, rand_var_types, rand_var_
         lat = row[1][0].y
         lon = row[1][0].x
         # Pull the randomly generated strings and ints from the dataframe
-        if random_vars:
+        if random_var:
             if (not extra_var):
                 query = f"INSERT into {table_name} (thegeom, "
                 for count, type in enumerate(rand_var_names):
@@ -719,10 +719,13 @@ def radian():
     ratio = (params["ratio"] / 100)
     vor_num = params["vor_num"]
     table_name = params["table_name"]
-    random_vars = params["random_vars"]
-    rand_var_types = params["rand_var_types"]
-    rand_var_names = params["rand_var_names"]
-    rand_var_params = params["rand_var_params"]
+    
+    random_var = params["random_var"]
+    random_var_dict = params["random_var_dict"]
+    rand_var_types = [var_dict["type"] for var_dict in random_var_dict]
+    rand_var_names = [var_dict["name"] for var_dict in random_var_dict]
+    rand_var_params = [var_dict["params"] for var_dict in random_var_dict]
+
     rand_centroid = params["rand_centroid"]
     to_sql = params["to_sql"]
     to_geojson = params["to_geojson"]
@@ -731,12 +734,12 @@ def radian():
     plot = params["plot"]
     basemap = params["basemap"]
     preview = params["preview"]
+
     extra_var = params["extra_var"]
-    extra_var_types = params["extra_var_types"]
-    extra_var_name = params["extra_var_name"]
-    extra_var_file = params["extra_var_file"]
-    extra_var_params = params["extra_var_params"]
     extra_var_dict = params["extra_var_dict"]
+    extra_var_types = [var_dict["type"] for var_dict in extra_var_dict]
+    extra_var_name = [var_dict["name"] for var_dict in extra_var_dict]
+    
 
     # Setting generation seed
     global glob_random_seed
@@ -800,10 +803,10 @@ def radian():
 
     ########## ADDITIONAL METADATA GENERATION ##########
 
-    if random_vars or extra_var:
+    if random_var or extra_var:
         print("Generating Metadata:")
 
-    if random_vars:
+    if random_var:
         gdf_out = generate_vars(gdf_out, rand_var_types, rand_var_names, rand_var_params)
 
     if(extra_var):
@@ -822,8 +825,8 @@ def radian():
     if(to_sql):
         if not os.path.exists(f"{directory}/SQL"):
             os.makedirs(f"{directory}/SQL")
-        #def gdf_to_sql(table_name, gdf, num_rows, random_vars, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory):
-        gdf_to_sql(table_name, gdf_out, total_pts, random_vars, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory)
+        #def gdf_to_sql(table_name, gdf, num_rows, random_var, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory):
+        gdf_to_sql(table_name, gdf_out, total_pts, random_var, rand_var_types, rand_var_names, extra_var, extra_var_types, extra_var_name, extra_var_dict, directory)
         print("* SQL dump file created: {} rows to {} with table name: {}.".format(total_pts, f'{directory}/SQL/{table_name}.sql', table_name))
     
     # Exporting  data to GeoJSON

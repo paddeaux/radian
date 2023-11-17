@@ -17,14 +17,9 @@
 	"plot":true,
 	"basemap":false,
 	"preview":true,
-	"random_vars" : false,
-	"rand_var_types" : ["int", "str"],
-	"rand_var_names" : ["phone_number", "area_code"],
-	"rand_var_params" : [[1000000000,9999999999], 7],
+	"random_var" : true,
+	"random_var_dict" : [{"type":"int", "name": "phone", "params": [1000000000,9999999999]},
+						 {"type":"str", "name": "area_code", "params": 7}],
 	"extra_var":false,
-	"extra_var_types" : ["str"],
-	"extra_var_name":["name"],
-	"extra_var_file":["paris_hotels.csv"],
-	"extra_var_params":[["str","var_name", "paris_hotels.csv"]],
 	"extra_var_dict": [{"type":"str", "name": "name", "source": "three_minute_thesis/paris_hotels.csv"}]
 }
