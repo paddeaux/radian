@@ -1,5 +1,5 @@
 {
-	"filepath":"geojson_polygons/glasgow.geojson",
+	"filepath":"geojson_polygons/paris.geojson",
 	"uniform_mode":false,
 	"set_seed": false,
 	"epsg":3857,
@@ -9,7 +9,7 @@
 	"rand_centroid":true,
 	"ratio":70,
 	"vor_num": 16,
-	"table_name":"glasgow_testing_5000",
+	"table_name":"paris_agile_example",
 	"to_sql":false,
 	"to_geojson":true,
 	"vor_to_geojson":false,
@@ -20,6 +20,6 @@
 	"random_var" : true,
 	"random_var_dict" : [{"type":"int", "name": "phone", "params": [1000000000,9999999999]},
 						 {"type":"str", "name": "area_code", "params": 7}],
-	"extra_var":false,
-	"extra_var_dict": [{"type":"str", "name": "name", "source": "three_minute_thesis/paris_hotels.csv"}]
+	"extra_var":true,
+	"extra_var_dict": [{"type":"str", "name": "name", "source": "restaurant.csv"}]
 }

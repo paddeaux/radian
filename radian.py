@@ -458,8 +458,8 @@ def gdf_to_sql(table_name, gdf, num_rows, random_var, rand_var_types, rand_var_n
 def csv_distribute(filename, num_values):
     source = pd.read_csv(filename, encoding='latin-1')
     if source.shape[1] < 2:
-        return list(random.choices(source['string'], k = num_values))
-    return list(random.choices(source['string'], weights = source['weight'], k = num_values))
+        return list(random.choices(source.iloc[:, 0], k = num_values))
+    return list(random.choices(source.iloc[:, 0], weights = source.iloc[:, 1], k = num_values))
 
 def generate_vars(gdf, rand_var_types, rand_var_names, rand_var_params):
     for count, type in enumerate(rand_var_types):
