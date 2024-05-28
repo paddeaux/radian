@@ -503,6 +503,20 @@ def primary_generation(source, source_centroid, total_pts, rand_centroid, epsg):
 
         vor_all = gpd.GeoDataFrame(pd.DataFrame(vor_all, columns=['geometry']), geometry='geometry', crs=3857)
 
+        # Plotting the overlapping buffers seperately
+        fig, ax = plt.subplots(1,5, figsize=(15,3), sharex=True)
+        fig.tight_layout()
+        print("vor_union")
+        for i, x in enumerate(ax):
+            x.axis("off")
+            vor_all.geometry.iloc[[4-i]].plot(ax=x)
+        plt.show()
+
+        fig, ax = plt.subplots(1,1,figsize=(10,8))
+        for i in range(5):
+            vor_all.geometry.iloc[[4-i]].plot(ax=ax, facecolor='blue', edgecolor='black')
+        plt.show()
+
         vor_points = int(np.ceil(total_pts / 5))
         primary_pts = gpd.GeoDataFrame(pd.DataFrame([], columns=['geometry']), geometry='geometry', crs=3857)
         for i in range(len(vor_all)):
