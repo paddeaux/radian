@@ -597,8 +597,8 @@ def plot_output(polygon, polygon_centroid, buffers, voronoi, vor_centroid, prima
     height = maxy - miny
 
     aspect_ratio = width/height
-    fig_width = 8
-    fig_height = 8
+    fig_width = 12
+    fig_height = 25
 
     if aspect_ratio > 1:
         fig_height = fig_width / round(aspect_ratio)
@@ -650,7 +650,7 @@ def plot_output(polygon, polygon_centroid, buffers, voronoi, vor_centroid, prima
         polygon_centroid.plot(ax=ax, color='red', markersize=10)
 
     # Basemap
-    if basemap: cx.add_basemap(axs[3], attribution=False)
+    if basemap: cx.add_basemap(axs[3], crs=epsg, attribution=False)
     plt.show()
 
 def radian():
@@ -670,7 +670,6 @@ def radian():
     directory = os.path.dirname(params["filepath"])
     filepath = params["filepath"]
     epsg = params['epsg']
-    save_name = os.path.basename(filepath)
     total_pts = params["total_pts"]
     gen_type = params["gen_type"]
     ratio = (params["ratio"] / 100)
@@ -842,7 +841,7 @@ def radian():
     ########## PLOTTING DATA ##########()
 
     if(plot):
-        plot_output(source_gdf, source_gdf.centroid, primary_vor_polygons, local_vor_polygons, local_vor_polygons.centroid, primary_points, secondary_points, False, epsg)
+        plot_output(source_gdf, source_gdf.centroid, primary_vor_polygons, local_vor_polygons, local_vor_polygons.centroid, primary_points, secondary_points, basemap, epsg)
 
     print('*' * star_width)
 
