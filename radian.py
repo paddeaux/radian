@@ -198,6 +198,7 @@ def kmeans_centroids(poly, num_points, num_cluster, eq_area):
     # The geometries of the Shapely points are converted to a numpy array for use in the kmeans algorithm
     feature_coords = np.array([[e.x, e.y] for e in source.geometry])
 
+
     # A kmeans object is created using the specified number of clusters
     kmeans = KMeans(num_cluster, random_state=glob_random_seed)
     kmeans.fit(feature_coords)
@@ -705,6 +706,8 @@ def radian():
 
     print("* Generation seed: " + str(glob_random_seed))
 
+    ########### LOADING SOURCE POLYGON(s)
+
     # Reading in the GeoJSON file, projecting to EPSG:3857 and checking for points density
     print(f"* Reading {filepath}...")
     file_name = os.path.basename(filepath)
@@ -712,7 +715,9 @@ def radian():
     if file_extension != '.geojson':
         print("invalid polygon file - please use .geojson format")
         return
+
     source_gdf = gpd.read_file(filepath)
+
     source_gdf = source_gdf.to_crs(epsg=3857)
     source_area = source_gdf.to_crs(epsg=8858)
     dens = total_pts/source_area.area[0]
@@ -720,6 +725,8 @@ def radian():
         print("Points density too low: {} points in an area of {}".format(total_pts, source.area))
         print("Minimum points density is 1 point / m^2.")
         return
+
+    
 
     ########## POINTS GENERATION ##########
 
