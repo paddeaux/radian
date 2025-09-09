@@ -62,7 +62,7 @@ class LineStringBender:
         if self._offset_position == "left":
             node_control = offset_line.coords[-1]
         elif self._offset_position == "right":
-            node_control = offset_line.coords[-1]
+            node_control = offset_line.coords[0]
         else:
             raise ValueError("Should never happened")
 
