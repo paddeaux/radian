@@ -1,16 +1,16 @@
 {
-	"filepath":"geojson_polygons/ireland.geojson",
+	"filepath":"geojson/ghent_4326.geojson",
 	"uniform_mode":false,
 	"set_seed": false,
 	"epsg":4326,
 	"seed" : 754095794,
-	"total_pts":1200,
+	"total_pts":200,
 	"gen_type":1,
 	"rand_centroid":true,
-	"ratio":25,
-	"vor_num": 32,
-	"table_name":"animal_elections",
-	"to_sql":true,
+	"ratio":50,
+	"vor_num": 8,
+	"table_name":"ghent_fastfood_radian",
+	"to_sql":false,
 	"to_geojson":true,
 	"vor_to_geojson":false,
 	"vor_to_sql":false,
@@ -19,15 +19,8 @@
 	"preview":true,
 	"missing_vals": 0,
 	"random_var" : true,
-	"random_var_dict" : [{"type":"int", "name": "elephant", "params": [250, 1000]},
-						 {"type":"int", "name": "giraffe", "params": [250, 1000]},
-						 {"type":"int", "name": "dog", "params": [125, 625]},
-						 {"type":"int", "name": "cat", "params": [125, 625]},
-						 {"type":"int", "name": "llama", "params": [125, 625]},
-						 {"type":"int", "name": "pigeon", "params": [400, 750]},
-						 {"type":"regex", "name": "station_code", "params": ["[a-zA-Z]{2}\\d{5}"]},
-						 {"type":"ts", "name": "polling_time", "params": ["2025-05-01 00:00:00", "2025-05-31 23:59:59"] }
+	"random_var_dict" : [{"type":"int", "name": "phone", "params": [1000000, 9999999]}
 						],
 	"extra_var":false,
-	"extra_var_dict": [{"type":"str", "name": "streetName", "source": "street_names.csv"}]
+	"extra_var_dict": [{"type":"str", "name": "name", "source": "misc/osm_fastfood_names.csv"}]
 }
